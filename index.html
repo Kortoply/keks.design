@@ -175,29 +175,40 @@
     </footer>
 
     <div id="case-modal" class="modal-overlay hidden">
-        <div class="modal-content solid-card">
+        <div class="modal-content solid-card premium-split-modal">
+
             <button id="modal-close" class="modal-close">✕</button>
 
-            <div class="modal-scrollable">
+            <div class="modal-left-pane">
                 <div id="modal-slider-container" class="modal-slider">
                     <div class="slider-track" id="modal-slider-track"></div>
                     <button class="slider-btn prev hidden" id="slider-prev">❮</button>
                     <button class="slider-btn next hidden" id="slider-next">❯</button>
                     <div class="slider-dots" id="slider-dots"></div>
                 </div>
+            </div>
 
-                <div class="modal-body" id="modal-body-container">
-                    <div class="modal-date-badge" id="modal-date"></div>
+            <div class="modal-right-pane">
 
-                    <div class="case-text" id="modal-text"></div>
-                    <div id="modal-tags" class="case-tags" style="display: none;"></div>
+                <div class="modal-scrollable">
+                    <div class="modal-body" id="modal-body-container">
+                        <div class="modal-tech-header">
+                            <span class="m-label">CASE // LOG</span>
+                            <div class="modal-date-badge" id="modal-date"></div>
+                        </div>
+
+                        <div class="case-text" id="modal-text"></div>
+                        <div id="modal-tags" class="case-tags" style="display: none;"></div>
+                    </div>
                 </div>
+
+                <div class="modal-actions">
+                    <a href="#" target="_blank" id="modal-link-tg" class="btn-secondary">Оригинал в Telegram ↗</a>
+                    <a href="https://t.me/KeksDesign" target="_blank" class="btn-primary">Написать мне</a>
+                </div>
+
             </div>
 
-            <div class="modal-actions">
-                <a href="#" target="_blank" id="modal-link-tg" class="btn-secondary">Оригинал в Telegram ↗</a>
-                <a href="https://t.me/KeksDesign" target="_blank" class="btn-primary">Написать мне</a>
-            </div>
         </div>
     </div>
 
