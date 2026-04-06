@@ -1,12 +1,16 @@
 document.addEventListener('DOMContentLoaded', () => {
     initScrollAnimations();
+    initTypewriter();
     fetchTelegramPosts();
     initModal();
 });
 
+/* =========================================
+   Анимация скролла и шапки
+========================================= */
 function initScrollAnimations() {
     const reveals = document.querySelectorAll('.reveal');
-    const navbarPill = document.getElementById('navbar'); // Отслеживаем саму капсулу
+    const navbarPill = document.getElementById('navbar');
 
     const observer = new IntersectionObserver((entries, obs) => {
         entries.forEach(entry => {
@@ -19,18 +23,57 @@ function initScrollAnimations() {
 
     reveals.forEach(el => observer.observe(el));
 
-    // Активируем шапку и hero сразу
     setTimeout(() => {
         document.querySelectorAll('#hero .reveal, header.reveal').forEach(el => el.classList.add('active'));
     }, 50);
 
-    // Добавляем тень капсуле при скролле
     window.addEventListener('scroll', () => {
         if (window.scrollY > 50) navbarPill.classList.add('scrolled');
         else navbarPill.classList.remove('scrolled');
     });
 }
 
+/* =========================================
+   Эффект Печатной Машинки
+========================================= */
+function initTypewriter() {
+    const words = ["премиальный UI.", "Web3-системы.", "чистый фронтенд.", "сложные дашборды."];
+    let i = 0;
+    let isDeleting = false;
+    let text = '';
+    const typeWriterElement = document.getElementById('typewriter');
+
+    function type() {
+        const currentWord = words[i];
+
+        if (isDeleting) {
+            text = currentWord.substring(0, text.length - 1);
+        } else {
+            text = currentWord.substring(0, text.length + 1);
+        }
+
+        typeWriterElement.innerText = text;
+
+        let typeSpeed = isDeleting ? 40 : 100;
+
+        if (!isDeleting && text === currentWord) {
+            typeSpeed = 2500;
+            isDeleting = true;
+        } else if (isDeleting && text === '') {
+            isDeleting = false;
+            i = (i + 1) % words.length;
+            typeSpeed = 500;
+        }
+
+        setTimeout(type, typeSpeed);
+    }
+
+    type();
+}
+
+/* =========================================
+   Загрузка Постов
+========================================= */
 let allPosts = [];
 let displayedCount = 0;
 const POSTS_PER_PAGE = 6;
@@ -151,10 +194,8 @@ function openModal(post) {
     const prevBtn = document.getElementById('slider-prev');
     const nextBtn = document.getElementById('slider-next');
 
-    // Текст
     document.getElementById('modal-text').innerText = post.text || 'Без описания';
 
-    // Хештеги в модалке
     const modalTags = document.getElementById('modal-tags');
     if (post.tags && post.tags.length > 0) {
         modalTags.innerHTML = post.tags.map(t => `<span class="case-tag">${t}</span>`).join('');
@@ -163,11 +204,9 @@ function openModal(post) {
         modalTags.style.display = 'none';
     }
 
-    // Дата-бейдж
     const dateOptions = { day: 'numeric', month: 'short', year: 'numeric' };
     document.getElementById('modal-date').innerText = new Date(post.date).toLocaleDateString('ru-RU', dateOptions);
 
-    // Ссылка
     document.getElementById('modal-link-tg').href = post.link;
 
     track.innerHTML = '';
@@ -178,7 +217,6 @@ function openModal(post) {
     slideImages = post.images && post.images.length > 0 ? post.images : (post.img ? [post.img] : []);
 
     if (slideImages.length === 0) {
-        // Если фото нет, скрываем контейнер слайдера и меняем режим отображения бейджа даты
         sliderContainer.style.display = 'none';
         modalBodyContainer.classList.add('no-image');
     } else {
@@ -205,6 +243,12 @@ function openModal(post) {
             prevBtn.classList.add('hidden');
             nextBtn.classList.add('hidden');
         }
+    }
+
+    // ВАЖНО: СБРАСЫВАЕМ СКРОЛЛ НА САМЫЙ ВЕРХ!
+    const scrollableArea = document.querySelector('.modal-scrollable');
+    if (scrollableArea) {
+        scrollableArea.scrollTop = 0;
     }
 
     modal.classList.add('active');

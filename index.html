@@ -24,20 +24,26 @@
         <section id="hero" class="hero section">
             <div class="hero-container reveal">
 
-                <div class="hero-top-info">
-                    <div class="badge-solid">
-                        <span class="badge-dot pulse"></span> Открыт к проектам
+                <div class="hero-status-pill">
+                    <div class="status-icon">
+                        <div class="status-dot pulse"></div>
                     </div>
-                    <span class="hero-tech-mono">SYS.ARCH // PRODUCT DESIGN</span>
+                    <div class="status-info">
+                        <span class="status-label">Статус</span>
+                        <span class="status-value">Открыт к проектам</span>
+                    </div>
                 </div>
 
-                <h1 class="hero-title">Дизайн, который<br><span class="text-muted">создает тренды.</span></h1>
+                <h1 class="hero-massive-title">
+                    Создаю<br>
+                    <span id="typewriter" class="text-muted"></span>
+                </h1>
 
-                <div class="hero-bottom-info">
-                    <p class="hero-subtitle">Проектирование премиальных интерфейсов, сложных дашбордов и платежной инфраструктуры. Эстетика Clean Tech с фокусом на идеальную конверсию.</p>
+                <div class="hero-divider">
+                    <p class="hero-desc">Разрабатываю премиальные интерфейсы и сложные Web3-продукты. Строгая эстетика, чистый код и фокус на конверсию.</p>
                     <div class="hero-buttons">
                         <a href="https://t.me/KeksDesign" target="_blank" class="btn-primary">Обсудить проект ↗</a>
-                        <a href="#portfolio" class="btn-secondary">Смотреть работы</a>
+                        <a href="#portfolio" class="btn-secondary">Смотреть работы ↓</a>
                     </div>
                 </div>
 
@@ -46,43 +52,81 @@
 
         <section id="about" class="section">
             <div class="bento-grid" id="cards-container">
+
                 <div class="bento-item span-2 solid-card reveal">
                     <div class="card-content">
-                        <h2 class="bento-title">Инженерия опыта</h2>
+                        <div class="bento-header-flex">
+                            <h2 class="bento-title">Архитектура смыслов</h2>
+                            <span class="bento-index">01</span>
+                        </div>
                         <p class="bento-text">Я не просто рисую картинки. Более 4 лет я создаю дизайн, который легко верстать и масштабировать. Глубокое понимание Frontend позволяет мне проектировать интерфейсы, которые в коде работают так же безупречно, как выглядят в Figma.</p>
                     </div>
                 </div>
 
                 <div class="bento-item solid-card reveal" style="transition-delay: 0.1s;">
-                    <div class="card-content">
-                        <h3 class="bento-subtitle text-white">Стек & Тулзы</h3>
-                        <ul class="clean-list">
-                            <li>Figma & Auto Layout</li>
-                            <li>Design Systems</li>
-                            <li>Web3 / FinTech UI</li>
-                            <li>Frontend (Vanilla)</li>
-                        </ul>
-                    </div>
-                </div>
-
-                <div class="bento-item solid-card reveal" style="transition-delay: 0.2s;">
-                    <div class="card-content">
-                        <h3 class="bento-subtitle">Landing Page</h3>
-                        <div class="price">от $500</div>
-                        <p class="bento-text small">Премиальный визуал, глубокая аналитика, анимации и подготовка к верстке.</p>
-                    </div>
-                </div>
-
-                <div class="bento-item span-2 solid-card reveal" style="transition-delay: 0.3s;">
-                    <div class="card-content flex-col h-100">
+                    <div class="card-content h-100 flex-col">
                         <div class="bento-header-flex">
-                            <h3 class="bento-subtitle">Web App & Infrastructure</h3>
-                            <div class="price text-white">от $1200</div>
+                            <h3 class="bento-title text-white">Инструменты</h3>
+                            <span class="bento-index">02</span>
                         </div>
-                        <p class="bento-text">Проектирование сложных дашбордов, крипто-кошельков и платежных шлюзов. Создание масштабируемой и строгой дизайн-системы.</p>
-                        <a href="https://t.me/KeksDesign" class="btn-primary mt-auto w-max">Заказать разработку</a>
+                        <div class="stack-tags mt-auto">
+                            <span class="stack-tag">Figma</span>
+                            <span class="stack-tag">Auto Layout</span>
+                            <span class="stack-tag">Web3 UI</span>
+                            <span class="stack-tag">Vanilla JS</span>
+                            <span class="stack-tag">HTML/CSS</span>
+                        </div>
                     </div>
                 </div>
+
+                <div class="bento-item span-3 solid-card reveal" style="transition-delay: 0.2s;">
+                    <div class="card-content">
+                        <div class="bento-header-flex">
+                            <h3 class="bento-title">Направления & Стоимость</h3>
+                            <span class="bento-index">03</span>
+                        </div>
+
+                        <div class="price-list-grid">
+                            <div class="price-item">
+                                <span class="price-name">WEB Дизайн</span>
+                                <div class="price-dots"></div>
+                                <span class="price-value">от 30$</span>
+                            </div>
+                            <div class="price-item">
+                                <span class="price-name">Форумная Графика</span>
+                                <div class="price-dots"></div>
+                                <span class="price-value">от 20$</span>
+                            </div>
+                            <div class="price-item">
+                                <span class="price-name">Логотипы</span>
+                                <div class="price-dots"></div>
+                                <span class="price-value">от 15$</span>
+                            </div>
+                            <div class="price-item">
+                                <span class="price-name">Баннеры / Превью</span>
+                                <div class="price-dots"></div>
+                                <span class="price-value">от 12$</span>
+                            </div>
+                            <div class="price-item">
+                                <span class="price-name">Инфографика</span>
+                                <div class="price-dots"></div>
+                                <span class="price-value">от 12$</span>
+                            </div>
+                            <div class="price-item">
+                                <span class="price-name">Типографика</span>
+                                <div class="price-dots"></div>
+                                <span class="price-value">от 10$</span>
+                            </div>
+                            <div class="price-item">
+                                <span class="price-name">Аватарки</span>
+                                <div class="price-dots"></div>
+                                <span class="price-value">от 10$</span>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+
             </div>
         </section>
 
@@ -114,7 +158,6 @@
                     <h4 class="footer-col-title">Навигация</h4>
                     <a href="#about" class="footer-link">Обо мне</a>
                     <a href="#portfolio" class="footer-link">Кейсы</a>
-                    <a href="#services" class="footer-link">Услуги</a>
                 </div>
                 <div class="footer-col">
                     <h4 class="footer-col-title">Контакты</h4>
