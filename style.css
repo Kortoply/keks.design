@@ -116,13 +116,20 @@ body.no-scroll {
     transition: all 0.4s ease;
 }
 .solid-card:hover { border-color: #333; }
-.card-content { padding: 3rem; }
 
-/* Обводные цифры на фоне (Очень стильно, не отвлекают) */
+/* Контент внутри карточек - растягиваем на всю высоту */
+.card-content {
+    padding: 3rem;
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+/* Обводные цифры на фоне */
 .bento-bg-outline {
     position: absolute; right: -2rem; bottom: -4rem;
     font-size: 18rem; font-weight: 700; line-height: 1;
-    -webkit-text-stroke: 2px rgba(255,255,255,0.03); /* Только контур */
+    -webkit-text-stroke: 2px rgba(255,255,255,0.03);
     color: transparent;
     pointer-events: none; z-index: 0; user-select: none; letter-spacing: -5px;
 }
@@ -156,13 +163,13 @@ body.no-scroll {
 .tech-item .t-arrow { font-size: 1.1rem; opacity: 0; transform: translate(-10px, 10px); transition: var(--transition); }
 
 .tech-item:hover {
-    background: #1A1A1A; /* Мягкое высветление, не бьет по глазам */
+    background: #1A1A1A;
     border-color: #333333;
 }
 .tech-item:hover .t-name { color: var(--text-main); }
 .tech-item:hover .t-arrow { color: var(--text-main); opacity: 1; transform: translate(0, 0); }
 
-/* Прайс-лист (Строгая линия-соединитель) */
+/* Прайс-лист */
 .premium-price-list { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem 4rem; }
 .price-row {
     display: flex; justify-content: space-between; align-items: flex-end;
@@ -174,7 +181,7 @@ body.no-scroll {
 .p-line {
     flex-grow: 1;
     border-bottom: 1px solid var(--border-color);
-    margin-bottom: 0.4rem; /* Поднимаем линию к середине текста */
+    margin-bottom: 0.4rem;
     transition: border-color 0.3s;
 }
 
@@ -195,19 +202,73 @@ body.no-scroll {
 .link-arrow:hover { color: var(--text-main); }
 
 .portfolio-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 1rem; align-items: stretch; }
-.case-card { cursor: pointer; text-decoration: none; transition: transform 0.3s, border-color 0.3s; display: flex; flex-direction: column; height: 100%; }
+
+.case-card {
+    cursor: pointer;
+    text-decoration: none;
+    transition: transform 0.3s, border-color 0.3s;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
 .case-card:hover { transform: translateY(-4px); border-color: var(--border-hover); }
+
+/* Оптимизированный отступ для карточек кейсов */
+.case-card .card-content { padding: 1.8rem; }
+
 .case-img-container { width: 100%; height: 240px; background: #050505; border-bottom: 1px solid var(--border-color); position: relative; overflow: hidden; flex-shrink: 0; }
 .skeleton-loader { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: linear-gradient(90deg, #050505 25%, #0f0f0f 50%, #050505 75%); background-size: 200% 100%; animation: loading 1.5s infinite; }
 @keyframes loading { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
 .case-img { width: 100%; height: 100%; object-fit: cover; opacity: 0; transition: opacity 0.6s ease-in-out; position: relative; z-index: 2; }
 .case-img.loaded { opacity: 1; }
+
 .case-text { color: var(--text-main); font-size: 1rem; font-weight: 500; line-height: 1.5; white-space: pre-line; display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden; text-overflow: ellipsis; }
 .case-card.no-image .case-text { -webkit-line-clamp: 10; }
 .case-date { color: var(--text-muted); font-size: 0.85rem; margin-top: auto; padding-top: 1.5rem; }
-.case-tags { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 1.2rem; }
-.case-tag { background: transparent; color: var(--text-muted); border: 1px solid var(--border-hover); padding: 0.35rem 0.8rem; border-radius: 100px; font-size: 0.75rem; font-weight: 500; transition: var(--transition); }
-.case-card:hover .case-tag { border-color: #555555; color: var(--text-main); }
+
+/* --- ОБНОВЛЕННЫЕ СТИЛИ ДЛЯ ТЕГОВ --- */
+.case-tags {
+    display: flex;
+    gap: 0.5rem;
+    margin-top: 1.2rem;
+}
+
+/* В карточках: 1 строка, обрезка с плавным угасанием (градиент) */
+.case-card .case-tags {
+    flex-wrap: nowrap;
+    overflow: hidden;
+    /* Плавное растворение тегов, которые не влезли */
+    -webkit-mask-image: linear-gradient(90deg, #000 85%, transparent 100%);
+    mask-image: linear-gradient(90deg, #000 85%, transparent 100%);
+}
+
+/* Чтобы теги не сжимались, а уходили за край */
+.case-card .case-tag {
+    flex-shrink: 0;
+}
+
+/* В модальном окне: показываем все теги без градиентов */
+#modal-tags.case-tags {
+    flex-wrap: wrap;
+    -webkit-mask-image: none;
+    mask-image: none;
+    overflow: visible;
+}
+
+.case-tag {
+    background: transparent;
+    color: var(--text-muted);
+    border: 1px solid var(--border-hover);
+    padding: 0.35rem 0.8rem;
+    border-radius: 100px;
+    font-size: 0.75rem;
+    font-weight: 500;
+    transition: var(--transition);
+}
+.case-card:hover .case-tag {
+    border-color: #555555;
+    color: var(--text-main);
+}
 
 /* =========================================
    Премиальный Подвал (Footer)
@@ -270,7 +331,7 @@ body.no-scroll {
     .bento-grid { grid-template-columns: 1fr; }
     .bento-item.span-2, .bento-item.span-3 { grid-column: span 1; }
 
-    .card-content { padding: 2rem; }
+    .bento-item .card-content { padding: 2rem; }
     .premium-price-list { grid-template-columns: 1fr; gap: 1rem; }
     .bento-bg-outline { font-size: 12rem; right: -1rem; bottom: -2rem; }
     .bento-title-large { font-size: 2.5rem; }
