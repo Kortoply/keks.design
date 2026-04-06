@@ -23,38 +23,25 @@ async function fetchTelegram() {
 
 function parsePosts(html) {
     const posts = [];
-    // Делим HTML на блоки сообщений
     const items = html.split('js-widget_message_wrap');
-    console.log(`Всего блоков найдено: ${items.length}`);
 
     for (let i = 1; i < items.length; i++) {
         const item = items[i];
         
-        // 1. Ищем текст
         const textMatch = item.match(/js-message_text[^>]*>([\s\S]*?)<\/div>/);
         let text = textMatch ? textMatch[1].replace(/<[^>]*>/g, '').trim() : "";
 
-        // 2. Ищем ссылку
         const linkMatch = item.match(/href="([^"]*?t\.me\/[^"]*?\/\d+)"/);
         const link = linkMatch ? linkMatch[1] : `https://t.me/${CHANNEL_NAME}`;
 
-        // 3. Ищем картинку (пробуем разные варианты оформления в TG)
         let img = null;
-        const imgRegs = [
-            /background-image:url\(['"]?([^'"]*?)['"]?\)/,
-            /data-src="([^"]*?)"/,
-            /src="([^"]*?)"/
-        ];
+        const imgMatch = item.match(/background-image:url\(['"]?([^'"]*?)['"]?\)/);
         
-        for (let reg of imgRegs) {
-            const match = item.match(reg);
-            if (match && match[1] && !match[1].includes('favicon')) {
-                img = match[1];
-                break;
-            }
+        if (imgMatch && imgMatch[1]) {
+            // Используем wsrv.nl для обхода блокировок Telegram CDN
+            img = `https://wsrv.nl/?url=${encodeURIComponent(imgMatch[1])}`;
         }
 
-        // 4. Ищем дату
         const dateMatch = item.match(/datetime="([^"]*?)"/);
         const date = dateMatch ? dateMatch[1] : new Date().toISOString();
 
@@ -63,7 +50,8 @@ function parsePosts(html) {
         }
     }
 
-    return posts.reverse().slice(0, 10);
+    // Сохраняем больше постов для пагинации
+    return posts.reverse().slice(0, 30);
 }
 
 async function run() {
