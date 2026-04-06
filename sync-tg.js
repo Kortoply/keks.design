@@ -5,13 +5,12 @@ const { URL } = require('url');
 
 const CHANNEL_NAME = 'casebykeks';
 const IMG_DIR = path.join(__dirname, 'cases-img');
-const MAX_PAGES = 5; // Сколько страниц истории парсить (5 страниц ≈ 100 постов)
+const MAX_PAGES = 5;
 
 if (!fs.existsSync(IMG_DIR)) {
     fs.mkdirSync(IMG_DIR);
 }
 
-// Функция скачивания (без изменений)
 function downloadImage(requestUrl, filepath) {
     return new Promise((resolve) => {
         https.get(requestUrl, {
@@ -46,7 +45,6 @@ function downloadImage(requestUrl, filepath) {
     });
 }
 
-// Теперь функция принимает параметр before для загрузки прошлых постов
 async function fetchTelegram(before = null) {
     const url = `https://t.me/s/${CHANNEL_NAME}${before ? '?before=' + before : ''}`;
     console.log(`Запрашиваю данные: ${url}`);
@@ -64,7 +62,6 @@ async function fetchTelegram(before = null) {
     });
 }
 
-// Парсинг отдельной страницы
 async function parsePage(html) {
     const posts = [];
     const items = html.split('js-widget_message_wrap');
@@ -85,18 +82,30 @@ async function parsePage(html) {
         const imgMatch = item.match(/background-image:url\(['"]?([^'"]*?)['"]?\)/);
 
         if (imgMatch && imgMatch[1]) {
-            const rawUrl = imgMatch[1];
-            const fileName = `case_${new Date(date).getTime()}.jpg`;
-            const filePath = path.join(IMG_DIR, fileName);
+            let rawUrl = imgMatch[1];
 
-            // Если файл уже скачан в прошлые разы, просто берем путь
-            if (fs.existsSync(filePath)) {
-                localImgPath = `./cases-img/${fileName}`;
-            } else {
-                console.log(`Скачиваю новую картинку: ${fileName}...`);
-                const isSuccess = await downloadImage(rawUrl, filePath);
-                if (isSuccess) {
+            // ФИЛЬТР: Пропускаем эмодзи и системные иконки Telegram
+            if (!rawUrl.includes('/emoji/')) {
+
+                // ФИЛЬТР: Если ссылка относительная (без https:), чиним её
+                if (rawUrl.startsWith('//')) {
+                    rawUrl = 'https:' + rawUrl;
+                }
+
+                // Убираем HTML-сущности, если они случайно попали в ссылку
+                rawUrl = rawUrl.replace(/&amp;/g, '&');
+
+                const fileName = `case_${new Date(date).getTime()}.jpg`;
+                const filePath = path.join(IMG_DIR, fileName);
+
+                if (fs.existsSync(filePath)) {
                     localImgPath = `./cases-img/${fileName}`;
+                } else {
+                    console.log(`Скачиваю новую картинку: ${fileName}...`);
+                    const isSuccess = await downloadImage(rawUrl, filePath);
+                    if (isSuccess) {
+                        localImgPath = `./cases-img/${fileName}`;
+                    }
                 }
             }
         }
@@ -106,7 +115,6 @@ async function parsePage(html) {
         }
     }
 
-    // Ищем параметр before для следующей страницы
     const moreMatch = html.match(/data-before="(\d+)"/);
     const nextBefore = moreMatch ? moreMatch[1] : null;
 
@@ -118,7 +126,6 @@ async function run() {
         let allPosts = [];
         let before = null;
 
-        // Листаем страницы канала
         for (let page = 1; page <= MAX_PAGES; page++) {
             console.log(`\n📄 Обработка страницы ${page}...`);
             const html = await fetchTelegram(before);
@@ -132,15 +139,12 @@ async function run() {
             }
             before = nextBefore;
 
-            // Задержка в 1 секунду, чтобы телеграм не выдал бан за частые запросы
             await new Promise(resolve => setTimeout(resolve, 1000));
         }
 
-        // Чистим дубликаты (на случай пересечения страниц) и сортируем от новых к старым
         const uniquePosts = Array.from(new Map(allPosts.map(item => [item.link, item])).values());
         uniquePosts.sort((a, b) => new Date(b.date) - new Date(a.date));
 
-        // Оставляем последние 100 постов (можешь изменить число)
         const finalPosts = uniquePosts.slice(0, 100);
 
         fs.writeFileSync('posts.json', JSON.stringify(finalPosts, null, 2));
