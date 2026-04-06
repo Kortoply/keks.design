@@ -6,7 +6,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 function initScrollAnimations() {
     const reveals = document.querySelectorAll('.reveal');
-    const navbar = document.querySelector('.navbar');
+    const navbarPill = document.getElementById('navbar'); // Отслеживаем саму капсулу
 
     const observer = new IntersectionObserver((entries, obs) => {
         entries.forEach(entry => {
@@ -18,11 +18,16 @@ function initScrollAnimations() {
     }, { threshold: 0.1, rootMargin: "0px 0px -50px 0px" });
 
     reveals.forEach(el => observer.observe(el));
-    setTimeout(() => document.querySelectorAll('#hero .reveal, nav.reveal').forEach(el => el.classList.add('active')), 50);
 
+    // Активируем шапку и hero сразу
+    setTimeout(() => {
+        document.querySelectorAll('#hero .reveal, header.reveal').forEach(el => el.classList.add('active'));
+    }, 50);
+
+    // Добавляем тень капсуле при скролле
     window.addEventListener('scroll', () => {
-        if (window.scrollY > 50) navbar.classList.add('scrolled');
-        else navbar.classList.remove('scrolled');
+        if (window.scrollY > 50) navbarPill.classList.add('scrolled');
+        else navbarPill.classList.remove('scrolled');
     });
 }
 
@@ -56,7 +61,6 @@ function renderNextBatch() {
         const dateOptions = { day: 'numeric', month: 'short', year: 'numeric' };
         const formattedDate = new Date(post.date).toLocaleDateString('ru-RU', dateOptions);
 
-        // Генерируем HTML для хештегов
         const tagsHTML = post.tags && post.tags.length > 0
             ? `<div class="case-tags">${post.tags.map(t => `<span class="case-tag">${t}</span>`).join('')}</div>`
             : '';
@@ -141,6 +145,7 @@ function initModal() {
 function openModal(post) {
     const modal = document.getElementById('case-modal');
     const sliderContainer = document.getElementById('modal-slider-container');
+    const modalBodyContainer = document.getElementById('modal-body-container');
     const track = document.getElementById('modal-slider-track');
     const dotsContainer = document.getElementById('slider-dots');
     const prevBtn = document.getElementById('slider-prev');
@@ -158,7 +163,7 @@ function openModal(post) {
         modalTags.style.display = 'none';
     }
 
-    // Дата
+    // Дата-бейдж
     const dateOptions = { day: 'numeric', month: 'short', year: 'numeric' };
     document.getElementById('modal-date').innerText = new Date(post.date).toLocaleDateString('ru-RU', dateOptions);
 
@@ -173,9 +178,12 @@ function openModal(post) {
     slideImages = post.images && post.images.length > 0 ? post.images : (post.img ? [post.img] : []);
 
     if (slideImages.length === 0) {
+        // Если фото нет, скрываем контейнер слайдера и меняем режим отображения бейджа даты
         sliderContainer.style.display = 'none';
+        modalBodyContainer.classList.add('no-image');
     } else {
         sliderContainer.style.display = 'flex';
+        modalBodyContainer.classList.remove('no-image');
 
         slideImages.forEach((imgSrc, index) => {
             const img = document.createElement('img');
