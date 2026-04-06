@@ -68,6 +68,8 @@ async function fetchTelegramPosts() {
         // ЛОГ ДЛЯ ТЕБЯ: Посмотри в консоль, что там прилетает
         console.log("Данные из файла:", posts);
 
+        feedContainer.innerHTML = '';
+
         if (!Array.isArray(posts) || posts.length === 0) {
             throw new Error('Массив постов пуст. Проверь парсер sync-tg.js');
         }
