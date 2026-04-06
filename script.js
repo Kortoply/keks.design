@@ -12,6 +12,7 @@ function initScrollAnimations() {
     const reveals = document.querySelectorAll('.reveal');
     const navbarPill = document.getElementById('navbar');
 
+    // Настроили rootMargin, чтобы элементы начинали появляться чуть раньше
     const observer = new IntersectionObserver((entries, obs) => {
         entries.forEach(entry => {
             if (entry.isIntersecting) {
@@ -19,7 +20,7 @@ function initScrollAnimations() {
                 obs.unobserve(entry.target);
             }
         });
-    }, { threshold: 0.1, rootMargin: "0px 0px -50px 0px" });
+    }, { threshold: 0.1, rootMargin: "0px 0px -20px 0px" });
 
     reveals.forEach(el => observer.observe(el));
 
@@ -150,7 +151,8 @@ function renderNextBatch() {
             };
         }
 
-        setTimeout(() => card.classList.add('active'), 100 * index);
+        // Ускорили задержку появления для карточек (было 100 * index, стало 50)
+        setTimeout(() => card.classList.add('active'), 50 * index);
     });
 
     displayedCount += nextBatch.length;
@@ -245,7 +247,6 @@ function openModal(post) {
         }
     }
 
-    // ВАЖНО: СБРАСЫВАЕМ СКРОЛЛ НА САМЫЙ ВЕРХ!
     const scrollableArea = document.querySelector('.modal-scrollable');
     if (scrollableArea) {
         scrollableArea.scrollTop = 0;

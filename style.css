@@ -12,6 +12,11 @@
     --transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
+html {
+    scroll-behavior: smooth;
+    scroll-padding-top: 6rem;
+}
+
 * {
     margin: 0; padding: 0; box-sizing: border-box;
     font-family: 'Inter', -apple-system, sans-serif;
@@ -50,7 +55,6 @@ body.no-scroll {
 
 .navbar-pill.scrolled {
     border-color: var(--border-hover);
-    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.8);
     transform: scale(0.98);
 }
 
@@ -100,36 +104,24 @@ body.no-scroll {
     flex-direction: column;
 }
 
-/* Инженерный Status Pill вместо простого бейджа */
 .hero-status-pill {
-    display: inline-flex; align-items: center; gap: 12px;
-    padding: 6px 16px 6px 6px;
-    background: var(--bg-base);
-    border: 1px solid var(--border-color);
-    border-radius: 100px;
-    margin-bottom: 4rem;
-    width: max-content;
-}
-
-.status-icon {
-    width: 28px; height: 28px;
+    display: inline-flex; align-items: center; gap: 10px;
+    padding: 0.5rem 1.2rem;
     background: var(--card-bg);
     border: 1px solid var(--border-color);
+    border-radius: 100px;
+    margin-bottom: 3rem;
+    width: max-content;
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: var(--text-main);
+}
+
+.status-dot {
+    width: 8px; height: 8px;
+    background-color: var(--text-main);
     border-radius: 50%;
-    display: flex; align-items: center; justify-content: center;
 }
-
-.status-info { display: flex; flex-direction: column; justify-content: center; padding-right: 4px; }
-.status-label { font-size: 0.6rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; line-height: 1; margin-bottom: 3px; }
-.status-value { font-size: 0.8rem; color: var(--text-main); font-weight: 500; letter-spacing: 0px; line-height: 1; }
-
-@keyframes pulse-dot {
-    0% { box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.4); }
-    70% { box-shadow: 0 0 0 6px rgba(255, 255, 255, 0); }
-    100% { box-shadow: 0 0 0 0 rgba(255, 255, 255, 0); }
-}
-.status-dot { width: 6px; height: 6px; background-color: #FFFFFF; border-radius: 50%; }
-.status-dot.pulse { animation: pulse-dot 2s infinite; }
 
 .hero-massive-title {
     font-size: clamp(3.5rem, 9vw, 7.5rem);
@@ -139,7 +131,6 @@ body.no-scroll {
     margin-bottom: 6rem;
 }
 
-/* ИДЕАЛЬНЫЙ КУРСОР: Вшит в псевдоэлемент текста, поэтому переносится вместе с ним! */
 #typewriter {
     position: relative;
     display: inline;
@@ -200,7 +191,6 @@ body.no-scroll {
 .bento-header-flex { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1.5rem; }
 .bento-title { font-size: 1.8rem; font-weight: 500; letter-spacing: -0.5px; }
 
-/* Индексы для карточек (01, 02, 03) */
 .bento-index {
     font-family: monospace;
     font-size: 0.85rem;
@@ -213,7 +203,6 @@ body.no-scroll {
 
 .bento-text { color: var(--text-muted); font-size: 1.05rem; line-height: 1.6; }
 
-/* Список инструментов (Теги) */
 .stack-tags { display: flex; flex-wrap: wrap; gap: 0.5rem; }
 .stack-tag {
     background: var(--bg-base);
@@ -227,7 +216,7 @@ body.no-scroll {
 /* Прайс-лист */
 .price-list-grid {
     display: grid;
-    grid-template-columns: repeat(2, 1fr); /* 2 колонки на ПК */
+    grid-template-columns: repeat(2, 1fr);
     gap: 1.5rem 4rem;
     margin-top: 1rem;
 }
@@ -335,7 +324,23 @@ body.no-scroll {
 /* =========================================
    Премиальный Подвал (Footer)
 ========================================= */
-.footer { border-top: 1px solid var(--border-color); padding-top: 6rem; padding-bottom: 6rem; }
+.footer {
+    /* Обводка только по бокам и сверху */
+    border-top: 1px solid var(--border-color);
+    border-left: 1px solid var(--border-color);
+    border-right: 1px solid var(--border-color);
+    border-bottom: none;
+
+    /* Скругление только верхних углов */
+    border-radius: 32px 32px 0 0;
+
+    background-color: transparent; /* Убрали фон */
+    padding: 5rem 4rem;
+    margin: 0 auto; /* Прижали к самому низу (нижний отступ 0) */
+    width: calc(100% - 2rem);
+    max-width: 1200px;
+}
+
 .footer-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 4rem; margin-bottom: 0; }
 .footer-brand { display: flex; flex-direction: column; gap: 1.5rem; }
 .footer-massive-title { font-size: clamp(3rem, 5vw, 4.5rem); font-weight: 600; letter-spacing: -2px; line-height: 1.05; }
@@ -370,10 +375,10 @@ body.no-scroll {
 
 .modal-close {
     position: absolute; top: 1rem; right: 1rem; z-index: 10;
-    background: rgba(0, 0, 0, 0.6); color: white; border: 1px solid var(--border-color);
+    background: var(--card-bg); color: white; border: 1px solid var(--border-color);
     width: 40px; height: 40px; border-radius: 50%; font-size: 1.2rem;
     cursor: pointer; display: flex; align-items: center; justify-content: center;
-    backdrop-filter: blur(5px); transition: var(--transition);
+    transition: var(--transition);
 }
 .modal-close:hover { background: var(--text-main); color: var(--bg-base); transform: scale(1.05); }
 
@@ -395,10 +400,10 @@ body.no-scroll {
 
 .slider-btn {
     position: absolute; top: 50%; transform: translateY(-50%); z-index: 5;
-    background: rgba(0, 0, 0, 0.5); color: white; border: 1px solid var(--border-color);
+    background: var(--card-bg); color: white; border: 1px solid var(--border-color);
     width: 44px; height: 44px; border-radius: 50%; cursor: pointer; font-size: 1.2rem;
     display: flex; align-items: center; justify-content: center;
-    backdrop-filter: blur(5px); transition: var(--transition);
+    transition: var(--transition);
 }
 .slider-btn:hover { background: var(--text-main); color: var(--bg-base); }
 .slider-btn.prev { left: 1rem; }
@@ -453,8 +458,15 @@ body.no-scroll {
     flex: 0 0 auto;
 }
 
-.reveal { opacity: 0; transform: translateY(20px); transition: opacity 0.8s ease-out, transform 0.8s ease-out; }
-.reveal.active { opacity: 1; transform: translateY(0); }
+.reveal {
+    opacity: 0;
+    transform: translateY(15px);
+    transition: opacity 0.6s cubic-bezier(0.2, 0.8, 0.2, 1), transform 0.6s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+.reveal.active {
+    opacity: 1;
+    transform: translateY(0);
+}
 
 /* =========================================
    Адаптивность (Mobile)
@@ -468,10 +480,17 @@ body.no-scroll {
 
     .bento-grid { grid-template-columns: 1fr; }
     .bento-item.span-2, .bento-item.span-3 { grid-column: span 1; }
-    .price-list-grid { grid-template-columns: 1fr; gap: 1rem; } /* Прайс в 1 колонку на мобилках */
+    .price-list-grid { grid-template-columns: 1fr; gap: 1rem; }
 
     .hidden-mobile { display: none; }
 
+    /* Обновленная адаптивность подвала */
+    .footer {
+        padding: 3rem 2rem;
+        margin: 0 1rem 0 1rem; /* Убрал отступ снизу */
+        width: auto;
+        border-radius: 24px 24px 0 0; /* Скругление только верхних углов на мобилках */
+    }
     .footer-grid { grid-template-columns: 1fr; gap: 3rem; margin-bottom: 0; }
     .footer-nav { justify-content: flex-start; flex-wrap: wrap; gap: 3rem; }
 
