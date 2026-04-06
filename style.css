@@ -35,11 +35,11 @@ body.no-scroll {
 .header-wrapper {
     position: fixed; top: 1.5rem; left: 0; width: 100%;
     display: flex; justify-content: center; z-index: 100;
-    padding: 0 1rem; pointer-events: none; /* Пропускает клики вне самой капсулы */
+    padding: 0 1rem; pointer-events: none;
 }
 
 .navbar-pill {
-    pointer-events: auto; /* Возвращаем кликабельность самой капсуле */
+    pointer-events: auto;
     display: flex; justify-content: space-between; align-items: center;
     background: var(--card-bg);
     border: 1px solid var(--border-color);
@@ -51,7 +51,7 @@ body.no-scroll {
 .navbar-pill.scrolled {
     border-color: var(--border-hover);
     box-shadow: 0 10px 40px rgba(0, 0, 0, 0.8);
-    transform: scale(0.98); /* Слегка сжимается при скролле для эффекта динамики */
+    transform: scale(0.98);
 }
 
 .logo { font-size: 1.1rem; font-weight: 600; letter-spacing: -0.5px; color: var(--text-main); }
@@ -69,7 +69,7 @@ body.no-scroll {
     font-size: 0.95rem; font-weight: 500; text-decoration: none;
     transition: var(--transition); cursor: pointer; border: none;
 }
-/* Спец-кнопка для шапки */
+
 .navbar-pill .btn-small { padding: 0.6rem 1.2rem; font-size: 0.85rem; border-radius: 100px; }
 
 .btn-primary { background: var(--text-main); color: var(--text-dark); }
@@ -83,23 +83,100 @@ body.no-scroll {
     padding: 0.4rem 1rem; background: var(--card-bg);
     border: 1px solid var(--border-color); border-radius: 100px;
     font-size: 0.85rem; font-weight: 500; color: var(--text-muted);
-    margin-bottom: 1.5rem;
 }
 .badge-dot { width: 8px; height: 8px; background-color: #FFFFFF; border-radius: 50%; }
+
+/* Пульсация зеленой точки */
+@keyframes pulse-dot {
+    0% { box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.4); }
+    70% { box-shadow: 0 0 0 6px rgba(255, 255, 255, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(255, 255, 255, 0); }
+}
+.badge-dot.pulse { animation: pulse-dot 2s infinite; }
 
 .text-muted { color: var(--text-muted); }
 .text-white { color: var(--text-main); }
 
 /* =========================================
-   Сетка и Однотонные Карточки
+   ГЛАВНЫЙ ЭКРАН (HERO) - CLEAN TECH
 ========================================= */
 .section { padding: 8rem 2rem 4rem; max-width: 1200px; margin: 0 auto; }
-.hero { min-height: 90vh; display: flex; align-items: center; padding-top: 12rem; /* Отступ от плавающей шапки */ }
-.hero-container { max-width: 800px; }
-.hero-title { font-size: clamp(3rem, 6vw, 5.5rem); font-weight: 600; letter-spacing: -2px; line-height: 1.05; margin-bottom: 1.5rem; }
-.hero-subtitle { font-size: 1.1rem; color: var(--text-muted); margin-bottom: 2.5rem; line-height: 1.6; max-width: 600px; }
-.hero-buttons { display: flex; gap: 1rem; }
 
+.hero {
+    position: relative;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    padding-top: 10rem;
+    z-index: 1;
+}
+
+/* Инженерная сетка на заднем фоне */
+.hero::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 50%; transform: translateX(-50%);
+    width: 100vw; height: 100%;
+    background-image:
+        linear-gradient(var(--border-color) 1px, transparent 1px),
+        linear-gradient(90deg, var(--border-color) 1px, transparent 1px);
+    background-size: 40px 40px;
+    background-position: center top;
+    /* Плавное растворение сетки к низу */
+    mask-image: linear-gradient(to bottom, black 0%, transparent 60%);
+    -webkit-mask-image: linear-gradient(to bottom, black 0%, transparent 60%);
+    z-index: -1;
+    opacity: 0.5;
+}
+
+.hero-container {
+    width: 100%;
+    max-width: 1000px;
+}
+
+.hero-top-info {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 3rem;
+    border-bottom: 1px solid var(--border-color);
+    padding-bottom: 1.5rem;
+}
+
+.hero-tech-mono {
+    font-family: monospace;
+    color: var(--text-muted);
+    font-size: 0.85rem;
+    letter-spacing: 1px;
+}
+
+.hero-title {
+    font-size: clamp(3.5rem, 8vw, 6.5rem);
+    font-weight: 600;
+    letter-spacing: -0.04em;
+    line-height: 1.05;
+    margin-bottom: 4rem;
+}
+
+.hero-bottom-info {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    gap: 2rem;
+}
+
+.hero-subtitle {
+    font-size: 1.15rem;
+    color: var(--text-muted);
+    line-height: 1.6;
+    margin: 0;
+    max-width: 500px;
+}
+.hero-buttons { display: flex; gap: 1rem; flex-shrink: 0; }
+
+/* =========================================
+   Сетка и Однотонные Карточки
+========================================= */
 .bento-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; }
 .bento-item.span-2 { grid-column: span 2; }
 
@@ -212,8 +289,8 @@ body.no-scroll {
 /* =========================================
    Премиальный Подвал (Footer)
 ========================================= */
-.footer { border-top: 1px solid var(--border-color); padding-top: 6rem; padding-bottom: 2rem; }
-.footer-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 4rem; margin-bottom: 6rem; }
+.footer { border-top: 1px solid var(--border-color); padding-top: 6rem; padding-bottom: 6rem; }
+.footer-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 4rem; margin-bottom: 0; }
 .footer-brand { display: flex; flex-direction: column; gap: 1.5rem; }
 .footer-massive-title { font-size: clamp(3rem, 5vw, 4.5rem); font-weight: 600; letter-spacing: -2px; line-height: 1.05; }
 .footer-brand-desc { color: var(--text-muted); font-size: 1.1rem; max-width: 400px; line-height: 1.6; }
@@ -222,10 +299,6 @@ body.no-scroll {
 .footer-col-title { color: var(--text-muted); font-size: 0.85rem; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 0.5rem; }
 .footer-link { color: var(--text-main); text-decoration: none; font-size: 1.1rem; font-weight: 500; transition: var(--transition); }
 .footer-link:hover { color: var(--text-muted); transform: translateX(4px); }
-.footer-bottom { display: flex; justify-content: space-between; align-items: center; padding-top: 2rem; border-top: 1px solid var(--border-color); }
-.footer-status { display: flex; align-items: center; gap: 8px; color: var(--text-main); font-size: 0.9rem; font-weight: 500; }
-.status-dot.green { width: 8px; height: 8px; background-color: #00E676; border-radius: 50%; }
-.footer-copy { color: var(--text-muted); font-size: 0.85rem; }
 
 /* =========================================
    Модальное окно (Pop-up)
@@ -296,18 +369,17 @@ body.no-scroll {
 }
 .slider-dots .dot.active { background: white; transform: scale(1.2); }
 
-/* --- МАГИЯ С ДАТОЙ (БЕЙДЖ) --- */
 .modal-body {
     padding: 2.5rem; display: flex; flex-direction: column; gap: 1.5rem;
-    position: relative; /* Необходимо для позиционирования бейджа */
+    position: relative;
 }
 
 .modal-date-badge {
     position: absolute;
     top: 0;
-    right: 2.5rem; /* Выравнивание по краю текста */
-    transform: translateY(-50%); /* Поднимает бейдж ровно на половину высоты на фото */
-    background: var(--bg-base); /* Черный фон прорезает границу */
+    right: 2.5rem;
+    transform: translateY(-50%);
+    background: var(--bg-base);
     border: 1px solid var(--border-color);
     color: var(--text-muted);
     padding: 0.4rem 1rem;
@@ -317,12 +389,11 @@ body.no-scroll {
     z-index: 10;
 }
 
-/* Если в посте нет фото — бейдж встает нормально над текстом */
 .modal-body.no-image .modal-date-badge {
     position: static;
     transform: none;
     align-self: flex-start;
-    margin-bottom: -0.5rem; /* Прижимаем текст ближе к дате */
+    margin-bottom: -0.5rem;
 }
 
 .modal-body .case-text {
@@ -339,22 +410,28 @@ body.no-scroll {
 .reveal { opacity: 0; transform: translateY(20px); transition: opacity 0.8s ease-out, transform 0.8s ease-out; }
 .reveal.active { opacity: 1; transform: translateY(0); }
 
+/* =========================================
+   Адаптивность (Mobile)
+========================================= */
 @media (max-width: 900px) {
-    /* Капсула на мобилках */
     .navbar-pill { padding: 0.5rem 0.5rem 0.5rem 1.2rem; }
+
+    .hero { padding-top: 8rem; }
+    .hero-bottom-info { flex-direction: column; align-items: flex-start; gap: 2rem; }
+    .hero-top-info { flex-direction: column; align-items: flex-start; gap: 1.5rem; border-bottom: none; padding-bottom: 0; }
+    .hero-tech-mono { display: none; } /* Скрываем на мобилках для чистоты */
 
     .bento-grid { grid-template-columns: 1fr; }
     .bento-item.span-2 { grid-column: span 1; }
     .hidden-mobile { display: none; }
     .hero-title { font-size: 2.8rem; }
 
-    .footer-grid { grid-template-columns: 1fr; gap: 3rem; }
+    .footer-grid { grid-template-columns: 1fr; gap: 3rem; margin-bottom: 0; }
     .footer-nav { justify-content: flex-start; flex-wrap: wrap; gap: 3rem; }
-    .footer-bottom { flex-direction: column; align-items: flex-start; gap: 1.5rem; }
 
     .modal-overlay { padding: 1rem; }
     .modal-body { padding: 1.5rem; }
-    .modal-date-badge { right: 1.5rem; } /* Подгоняем отступ под мобильный паддинг */
+    .modal-date-badge { right: 1.5rem; }
 
     .modal-actions { padding: 1rem 1.5rem; flex-direction: row; gap: 0.5rem; }
     .modal-actions a { width: 50%; padding: 0.9rem 0.5rem; font-size: 0.85rem; }
