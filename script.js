@@ -64,7 +64,7 @@ function renderNextBatch() {
             </div>` : ''}
             <div class="card-content">
                 <div class="case-text">${post.text || 'Без описания'}</div>
-                <div class="case-date">${new Date(post.date).toLocaleDateString('ru-RU', {day:'numeric', month:'short'})}</div>
+                <div class="case-date">${new Date(post.date).toLocaleDateString('ru-RU', { day: 'numeric', month: 'short', year: 'numeric' })}</div>
             </div>
         `;
 

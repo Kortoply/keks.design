@@ -69,7 +69,7 @@ async function parsePage(html) {
     for (let i = 1; i < items.length; i++) {
         const item = items[i];
 
-        // ФИЛЬТР 1: Пропускаем технические сообщения Telegram (создание канала, смена фото и т.д.)
+        // ФИЛЬТР 1: Пропускаем технические сообщения Telegram
         if (item.includes('tgme_widget_message_service')) {
             continue;
         }
@@ -77,8 +77,14 @@ async function parsePage(html) {
         const textMatch = item.match(/js-message_text[^>]*>([\s\S]*?)<\/div>/);
         let text = textMatch ? textMatch[1].replace(/<[^>]*>/g, '').trim() : "";
 
-        // ФИЛЬТР 2: Дополнительная жесткая зачистка по тексту
-        if (text === 'Channel created' || text === 'Channel photo updated') {
+        // ФИЛЬТР 2: Жесткая зачистка по тексту (убираем закрепы и системные статусы)
+        if (
+            text === 'Channel created' ||
+            text === 'Channel photo updated' ||
+            text.includes('pinned «') ||
+            text.includes('pinned a message') ||
+            text.includes('закрепил')
+        ) {
             continue;
         }
 

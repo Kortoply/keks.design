@@ -104,8 +104,12 @@ body {
     transition: border-color 0.3s ease;
 }
 .solid-card:hover { border-color: var(--border-hover); }
-.card-content { padding: 2.5rem; }
-
+.card-content {
+    padding: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    flex-grow: 1; /* Заставляет контент-блок занять всё свободное место */
+}
 .bento-title { font-size: 1.8rem; font-weight: 500; letter-spacing: -0.5px; margin-bottom: 1rem; }
 .bento-subtitle { font-size: 1.2rem; font-weight: 500; margin-bottom: 1rem; }
 .bento-text { color: var(--text-muted); font-size: 0.95rem; line-height: 1.6; }
@@ -129,8 +133,8 @@ body {
 .link-arrow { color: var(--text-muted); text-decoration: none; font-size: 0.9rem; transition: var(--transition); }
 .link-arrow:hover { color: var(--text-main); }
 
-.portfolio-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 1rem; }
-.case-card { cursor: pointer; text-decoration: none; transition: transform 0.3s, border-color 0.3s; }
+.portfolio-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 1rem; align-items: stretch; }
+.case-card { cursor: pointer; text-decoration: none; transition: transform 0.3s, border-color 0.3s; display: flex; flex-direction: column; height: 100%; }
 .case-card:hover { transform: translateY(-4px); }
 .case-card .card-content { padding: 1.5rem; }
 
@@ -171,9 +175,20 @@ body {
     background: #050505; color: #333; z-index: 1;
 }
 
-.case-text { color: var(--text-main); font-size: 1rem; font-weight: 500; line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
-.case-date { color: var(--text-muted); font-size: 0.85rem; margin-top: 0.8rem; }
-
+.case-text {
+    color: var(--text-main);
+    font-size: 1rem;
+    font-weight: 500;
+    line-height: 1.5;
+    white-space: pre-line; /* Сохраняет абзацы из Telegram */
+    /* Убрали ограничение строк, текст теперь виден полностью */
+}
+.case-date {
+    color: var(--text-muted);
+    font-size: 0.85rem;
+    margin-top: auto; /* Магия: отталкивает дату в самый низ карточки */
+    padding-top: 1.5rem; /* Небольшой отступ от текста */
+}
 /* Подвал */
 .footer { border-top: 1px solid var(--border-color); padding-top: 4rem; padding-bottom: 2rem; }
 .footer-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 4rem; }
