@@ -1,7 +1,6 @@
 const fs = require('fs');
 const https = require('https');
 
-// УБЕДИСЬ, ЧТО ЭТО ИМЯ ТВОЕГО ПУБЛИЧНОГО КАНАЛА (БЕЗ @)
 const CHANNEL_NAME = 'casebykeks';
 
 async function fetchTelegram() {
@@ -38,8 +37,9 @@ function parsePosts(html) {
         const imgMatch = item.match(/background-image:url\(['"]?([^'"]*?)['"]?\)/);
 
         if (imgMatch && imgMatch[1]) {
-            // Используем wsrv.nl для обхода блокировок Telegram CDN
-            img = `https://wsrv.nl/?url=${encodeURIComponent(imgMatch[1])}`;
+            // Заменили wsrv.nl на более надежный corsproxy, который решает проблему с РФ
+            const rawUrl = imgMatch[1];
+            img = `https://corsproxy.io/?url=${encodeURIComponent(rawUrl)}`;
         }
 
         const dateMatch = item.match(/datetime="([^"]*?)"/);
@@ -50,19 +50,12 @@ function parsePosts(html) {
         }
     }
 
-    // Сохраняем больше постов для пагинации
     return posts.reverse().slice(0, 30);
 }
 
 async function run() {
     try {
         const html = await fetchTelegram();
-        if (html.includes('tgme_sidebar_column_user_description')) {
-            console.log("Страница канала получена успешно.");
-        } else {
-            console.warn("Предупреждение: Структура страницы отличается от ожидаемой.");
-        }
-
         const posts = parsePosts(html);
         console.log(`Успешно спарсено постов: ${posts.length}`);
 

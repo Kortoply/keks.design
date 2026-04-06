@@ -1,12 +1,8 @@
 document.addEventListener('DOMContentLoaded', () => {
     initScrollAnimations();
-    initSpotlightEffect();
     fetchTelegramPosts();
 });
 
-/* =========================================
-   1. Плавное появление элементов
-========================================= */
 function initScrollAnimations() {
     const reveals = document.querySelectorAll('.reveal');
     const navbar = document.querySelector('.navbar');
@@ -29,152 +25,79 @@ function initScrollAnimations() {
     });
 }
 
-/* =========================================
-   2. Эффект Spotlight (Слежение мыши на карточках)
-========================================= */
-function initSpotlightEffect() {
-    const handleMouseMove = (e) => {
-        const cards = document.querySelectorAll('.glass-card');
-
-        for (const card of cards) {
-            const rect = card.getBoundingClientRect();
-            const x = e.clientX - rect.left;
-            const y = e.clientY - rect.top;
-
-            card.style.setProperty('--mouse-x', `${x}px`);
-            card.style.setProperty('--mouse-y', `${y}px`);
-        }
-    };
-
-    document.getElementById('cards-container').addEventListener('mousemove', handleMouseMove);
-    document.getElementById('portfolio').addEventListener('mousemove', handleMouseMove);
-}
-
-/* =========================================
-   3. Загрузка данных из posts.json (Jamstack)
-========================================= */
-async function fetchTelegramPosts() {
-    const feedContainer = document.getElementById('tg-feed');
-
-    try {
-        const response = await fetch(`./posts.json?t=${new Date().getTime()}`);
-
-        if (!response.ok) {
-            throw new Error(`Файл не найден на сервере (Статус: ${response.status})`);
-        }
-
-        const posts = await response.json();
-
-        // ЛОГ ДЛЯ ТЕБЯ: Посмотри в консоль, что там прилетает
-        console.log("Данные из файла:", posts);
-
-        feedContainer.innerHTML = '';
-
-        if (!Array.isArray(posts) || posts.length === 0) {
-            throw new Error('Массив постов пуст. Проверь парсер sync-tg.js');
-        }
-
-        feedContainer.innerHTML = '';
-
-        posts.forEach((post, index) => {
-            // Если в объекте поста нет поля text или date, подставляем стандартные значения
-            const text = post.text || "Без описания";
-            const dateStr = post.date ? new Date(post.date).toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' }) : "Недавно";
-
-            const card = document.createElement('a');
-            card.href = post.link || "#";
-            card.target = "_blank";
-            card.className = 'glass-card case-card reveal';
-            card.style.transitionDelay = `${index * 0.1}s`;
-
-            card.innerHTML = `
-                ${post.img
-                    ? `<img src="${post.img}" class="case-img" alt="Keks Design">`
-                    : `<div class="case-img" style="display:flex; align-items:center; justify-content:center; background: var(--glass-bg); color: var(--text-muted);">UI/UX Case</div>`
-                }
-                <div class="card-content">
-                    <div class="case-text">${text}</div>
-                    <div class="case-date">${dateStr}</div>
-                </div>
-            `;
-            feedContainer.appendChild(card);
-
-            requestAnimationFrame(() => {
-                setTimeout(() => card.classList.add('active'), 50);
-            });
-        });
-
-    } catch (error) {
-        console.error('Ошибка отрисовки портфолио:', error.message);
-        // Тут остается твой красивый fallback
-    }
-}
-
-let allPosts = []; // Хранилище для всех загруженных постов
-let displayedCount = 0; // Сколько постов уже показано
+let allPosts = [];
+let displayedCount = 0;
 const POSTS_PER_PAGE = 6;
 
 async function fetchTelegramPosts() {
-    const feedContainer = document.getElementById('tg-feed');
-    const loadMoreBtn = document.getElementById('load-more-btn');
-
     try {
         const response = await fetch(`./posts.json?t=${new Date().getTime()}`);
-        if (!response.ok) throw new Error('Ошибка загрузки');
+        if (!response.ok) throw new Error('Ошибка загрузки JSON');
 
         allPosts = await response.json();
-        feedContainer.innerHTML = '';
-
-        renderNextBatch(); // Показываем первые 6
-
+        document.getElementById('tg-feed').innerHTML = '';
+        renderNextBatch();
     } catch (error) {
-        console.error(error);
-        // Вызов вашего красивого Fallback...
+        console.error("Не удалось загрузить посты:", error);
     }
 }
 
 function renderNextBatch() {
     const feedContainer = document.getElementById('tg-feed');
     const loadMoreBtn = document.getElementById('load-more-container');
-
-    // Вырезаем следующую порцию данных
     const nextBatch = allPosts.slice(displayedCount, displayedCount + POSTS_PER_PAGE);
+
+    // Минималистичная SVG заглушка в стиле Clean Tech
+    const fallbackSVG = `<svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>`;
 
     nextBatch.forEach((post, index) => {
         const card = document.createElement('a');
-        card.href = post.link;
+        card.href = post.link || "#";
         card.target = "_blank";
-        card.className = 'glass-card case-card reveal';
+        card.className = 'solid-card case-card reveal';
 
-        // SVG Заглушка, если картинка не загрузится
-        const fallbackSVG = `<svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" style="opacity:0.2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>`;
+        const hasImage = !!post.img;
 
         card.innerHTML = `
-            <div class="case-img-container" style="background: var(--glass-bg); position: relative; height: 220px; display: flex; align-items: center; justify-content: center; overflow: hidden;">
-                ${post.img
-                    ? `<img src="${post.img}" class="case-img" alt="Case" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">`
-                    : ''}
-                <div class="img-fallback" style="${post.img ? 'display:none;' : 'display:flex;'}">${fallbackSVG}</div>
+            <div class="case-img-container">
+                <div class="svg-fallback">${fallbackSVG}</div>
+                ${hasImage ? `<div class="skeleton-loader"></div><img class="case-img" alt="Case Image">` : ''}
             </div>
             <div class="card-content">
-                <div class="case-text">${post.text || 'Кейс без описания'}</div>
+                <div class="case-text">${post.text || 'Без описания'}</div>
                 <div class="case-date">${new Date(post.date).toLocaleDateString('ru-RU', {day:'numeric', month:'short'})}</div>
             </div>
         `;
 
         feedContainer.appendChild(card);
+
+        // Логика плавной предзагрузки картинки
+        if (hasImage) {
+            const imgElement = card.querySelector('.case-img');
+            const skeleton = card.querySelector('.skeleton-loader');
+
+            const tempImg = new Image();
+            tempImg.src = post.img;
+
+            // Как только картинка скачалась - показываем её плавно
+            tempImg.onload = () => {
+                imgElement.src = tempImg.src;
+                imgElement.classList.add('loaded');
+                setTimeout(() => { if(skeleton) skeleton.remove(); }, 600); // Убираем скелетон после fade-in
+            };
+
+            // Если картинка недоступна в РФ или битая - убираем скелетон, остается SVG
+            tempImg.onerror = () => {
+                if(skeleton) skeleton.remove();
+                imgElement.remove();
+            };
+        }
+
         setTimeout(() => card.classList.add('active'), 100 * index);
     });
 
     displayedCount += nextBatch.length;
-
-    // Прячем кнопку, если посты закончились
-    if (displayedCount >= allPosts.length) {
-        loadMoreBtn.style.display = 'none';
-    } else {
-        loadMoreBtn.style.display = 'flex';
-    }
+    loadMoreBtn.style.display = displayedCount >= allPosts.length ? 'none' : 'flex';
 }
 
-// Привязываем кнопку
 document.getElementById('load-more-btn').addEventListener('click', renderNextBatch);
