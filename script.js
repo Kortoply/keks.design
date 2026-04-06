@@ -51,11 +51,15 @@ function renderNextBatch() {
         const card = document.createElement('a');
         card.href = post.link || "#";
         card.target = "_blank";
-        card.className = 'solid-card case-card reveal';
 
         const hasImage = !!post.img;
+        // Добавляем класс no-image, если картинки нет
+        card.className = `solid-card case-card reveal ${hasImage ? '' : 'no-image'}`;
 
-        // Рендерим контейнер картинки ТОЛЬКО если картинка действительно есть
+        // Формируем красивую дату с годом
+        const dateOptions = { day: 'numeric', month: 'short', year: 'numeric' };
+        const formattedDate = new Date(post.date).toLocaleDateString('ru-RU', dateOptions);
+
         card.innerHTML = `
             ${hasImage ? `
             <div class="case-img-container">
@@ -64,13 +68,12 @@ function renderNextBatch() {
             </div>` : ''}
             <div class="card-content">
                 <div class="case-text">${post.text || 'Без описания'}</div>
-                <div class="case-date">${new Date(post.date).toLocaleDateString('ru-RU', { day: 'numeric', month: 'short', year: 'numeric' })}</div>
+                <div class="case-date">${formattedDate}</div>
             </div>
         `;
 
         feedContainer.appendChild(card);
 
-        // Логика загрузки, если картинка присутствует
         if (hasImage) {
             const imgElement = card.querySelector('.case-img');
             const skeleton = card.querySelector('.skeleton-loader');
@@ -79,16 +82,16 @@ function renderNextBatch() {
             const tempImg = new Image();
             tempImg.src = post.img;
 
-            // Плавное появление
             tempImg.onload = () => {
                 imgElement.src = tempImg.src;
                 imgElement.classList.add('loaded');
                 setTimeout(() => { if(skeleton) skeleton.remove(); }, 600);
             };
 
-            // Если картинка физически битая/недоступна — удаляем блок картинки целиком
             tempImg.onerror = () => {
                 if(imgContainer) imgContainer.remove();
+                // Если картинка битая, переключаем карточку в режим no-image
+                card.classList.add('no-image');
             };
         }
 

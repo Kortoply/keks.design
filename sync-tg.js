@@ -69,7 +69,7 @@ async function parsePage(html) {
     for (let i = 1; i < items.length; i++) {
         const item = items[i];
 
-        // ФИЛЬТР 1: Пропускаем технические сообщения Telegram
+        // ФИЛЬТР 1: Технические сообщения (создание, смена аватара)
         if (item.includes('tgme_widget_message_service')) {
             continue;
         }
@@ -77,7 +77,7 @@ async function parsePage(html) {
         const textMatch = item.match(/js-message_text[^>]*>([\s\S]*?)<\/div>/);
         let text = textMatch ? textMatch[1].replace(/<[^>]*>/g, '').trim() : "";
 
-        // ФИЛЬТР 2: Жесткая зачистка по тексту (убираем закрепы и системные статусы)
+        // ФИЛЬТР 2: Зачистка закрепов
         if (
             text === 'Channel created' ||
             text === 'Channel photo updated' ||
@@ -100,15 +100,11 @@ async function parsePage(html) {
         if (imgMatch && imgMatch[1]) {
             let rawUrl = imgMatch[1];
 
-            // ФИЛЬТР: Пропускаем эмодзи и системные иконки Telegram
             if (!rawUrl.includes('/emoji/')) {
-
-                // ФИЛЬТР: Если ссылка относительная (без https:), чиним её
                 if (rawUrl.startsWith('//')) {
                     rawUrl = 'https:' + rawUrl;
                 }
 
-                // Убираем HTML-сущности, если они случайно попали в ссылку
                 rawUrl = rawUrl.replace(/&amp;/g, '&');
 
                 const fileName = `case_${new Date(date).getTime()}.jpg`;
