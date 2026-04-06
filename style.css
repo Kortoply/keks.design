@@ -25,6 +25,11 @@ body {
     overflow-x: hidden;
 }
 
+/* Блокировка скролла, когда открыта модалка */
+body.no-scroll {
+    overflow: hidden;
+}
+
 /* =========================================
    Навигация
 ========================================= */
@@ -190,13 +195,12 @@ body {
     line-height: 1.5;
     white-space: pre-line;
     display: -webkit-box;
-    -webkit-line-clamp: 4; /* Максимум 4 строки для постов с фото */
+    -webkit-line-clamp: 4;
     -webkit-box-orient: vertical;
     overflow: hidden;
     text-overflow: ellipsis;
 }
 
-/* Если карточка без фото — даем тексту больше места (10 строк) */
 .case-card.no-image .case-text {
     -webkit-line-clamp: 10;
 }
@@ -204,9 +208,89 @@ body {
 .case-date {
     color: var(--text-muted);
     font-size: 0.85rem;
-    margin-top: auto; /* Прибивает дату к низу */
+    margin-top: auto;
     padding-top: 1.5rem;
 }
+
+/* =========================================
+   Модальное окно (Pop-up)
+========================================= */
+.modal-overlay {
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(0, 0, 0, 0.85); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+    z-index: 1000; display: flex; justify-content: center; align-items: center;
+    opacity: 0; pointer-events: none; transition: opacity 0.3s ease;
+    padding: 1.5rem;
+}
+
+.modal-overlay.active {
+    opacity: 1; pointer-events: auto;
+}
+
+.modal-content {
+    width: 100%; max-width: 800px; max-height: 90vh;
+    display: flex; flex-direction: column; position: relative;
+    transform: translateY(20px); transition: transform 0.3s ease;
+    overflow-y: auto; /* Позволяет листать контент, если текста много */
+}
+
+.modal-overlay.active .modal-content {
+    transform: translateY(0);
+}
+
+.modal-close {
+    position: absolute; top: 1rem; right: 1rem; z-index: 10;
+    background: rgba(0, 0, 0, 0.6); color: white; border: 1px solid var(--border-color);
+    width: 40px; height: 40px; border-radius: 50%; font-size: 1.2rem;
+    cursor: pointer; display: flex; align-items: center; justify-content: center;
+    backdrop-filter: blur(5px); transition: var(--transition);
+}
+.modal-close:hover { background: var(--text-main); color: var(--bg-base); transform: scale(1.05); }
+
+/* Слайдер внутри модалки */
+.modal-slider {
+    position: relative; width: 100%; background: #050505;
+    border-bottom: 1px solid var(--border-color); overflow: hidden;
+    min-height: 300px; display: flex; align-items: center; justify-content: center;
+}
+
+.slider-track {
+    display: flex; width: 100%; transition: transform 0.4s cubic-bezier(0.25, 1, 0.5, 1);
+}
+
+.slider-track img {
+    width: 100%; max-height: 60vh; object-fit: contain; flex-shrink: 0;
+}
+
+.slider-btn {
+    position: absolute; top: 50%; transform: translateY(-50%); z-index: 5;
+    background: rgba(0, 0, 0, 0.5); color: white; border: 1px solid var(--border-color);
+    width: 44px; height: 44px; border-radius: 50%; cursor: pointer; font-size: 1.2rem;
+    display: flex; align-items: center; justify-content: center;
+    backdrop-filter: blur(5px); transition: var(--transition);
+}
+.slider-btn:hover { background: var(--text-main); color: var(--bg-base); }
+.slider-btn.prev { left: 1rem; }
+.slider-btn.next { right: 1rem; }
+.slider-btn.hidden { display: none; }
+
+.slider-dots {
+    position: absolute; bottom: 1rem; left: 0; width: 100%;
+    display: flex; justify-content: center; gap: 8px; z-index: 5;
+}
+.slider-dots .dot {
+    width: 8px; height: 8px; border-radius: 50%; background: rgba(255,255,255,0.3);
+    cursor: pointer; transition: 0.3s;
+}
+.slider-dots .dot.active { background: white; transform: scale(1.2); }
+
+.modal-body { padding: 2.5rem; display: flex; flex-direction: column; gap: 1.5rem; }
+.modal-body .case-text {
+    -webkit-line-clamp: unset; /* В модалке показываем весь текст */
+    overflow: visible; display: block; font-size: 1.05rem;
+}
+.modal-actions { display: flex; gap: 1rem; flex-wrap: wrap; margin-top: 1rem; }
+
 
 /* Подвал */
 .footer { border-top: 1px solid var(--border-color); padding-top: 4rem; padding-bottom: 2rem; }
@@ -225,4 +309,6 @@ body {
     .hidden-mobile { display: none; }
     .hero-title { font-size: 2.8rem; }
     .footer-top { flex-direction: column; gap: 2rem; align-items: flex-start; }
+    .modal-actions { flex-direction: column; }
+    .modal-actions a { width: 100%; }
 }

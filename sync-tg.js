@@ -69,7 +69,6 @@ async function parsePage(html) {
     for (let i = 1; i < items.length; i++) {
         const item = items[i];
 
-        // ФИЛЬТР 1: Технические сообщения (создание, смена аватара)
         if (item.includes('tgme_widget_message_service')) {
             continue;
         }
@@ -77,7 +76,6 @@ async function parsePage(html) {
         const textMatch = item.match(/js-message_text[^>]*>([\s\S]*?)<\/div>/);
         let text = textMatch ? textMatch[1].replace(/<[^>]*>/g, '').trim() : "";
 
-        // ФИЛЬТР 2: Зачистка закрепов
         if (
             text === 'Channel created' ||
             text === 'Channel photo updated' ||
@@ -94,36 +92,57 @@ async function parsePage(html) {
         const dateMatch = item.match(/datetime="([^"]*?)"/);
         const date = dateMatch ? dateMatch[1] : new Date().toISOString();
 
-        let localImgPath = null;
-        const imgMatch = item.match(/background-image:url\(['"]?([^'"]*?)['"]?\)/);
+        // Удаляем аватарку канала из строки поиска, чтобы случайно не скачать её
+        const cleanItem = item.replace(/<a[^>]+tgme_widget_message_user_pic[^>]+>.*?<\/a>/gs, '');
 
-        if (imgMatch && imgMatch[1]) {
-            let rawUrl = imgMatch[1];
+        // Ищем все фоновые картинки (это и есть фото альбома)
+        const imgRegex = /background-image:url\(['"]?([^'"]*?)['"]?\)/g;
+        let match;
+        const rawUrls = [];
 
-            if (!rawUrl.includes('/emoji/')) {
-                if (rawUrl.startsWith('//')) {
-                    rawUrl = 'https:' + rawUrl;
-                }
+        while ((match = imgRegex.exec(cleanItem)) !== null) {
+            let rawUrl = match[1];
 
+            if (!rawUrl.includes('/emoji/') && !rawUrl.includes('base64')) {
+                if (rawUrl.startsWith('//')) rawUrl = 'https:' + rawUrl;
                 rawUrl = rawUrl.replace(/&amp;/g, '&');
 
-                const fileName = `case_${new Date(date).getTime()}.jpg`;
-                const filePath = path.join(IMG_DIR, fileName);
-
-                if (fs.existsSync(filePath)) {
-                    localImgPath = `./cases-img/${fileName}`;
-                } else {
-                    console.log(`Скачиваю новую картинку: ${fileName}...`);
-                    const isSuccess = await downloadImage(rawUrl, filePath);
-                    if (isSuccess) {
-                        localImgPath = `./cases-img/${fileName}`;
-                    }
+                // Избегаем дубликатов
+                if (!rawUrls.includes(rawUrl)) {
+                    rawUrls.push(rawUrl);
                 }
             }
         }
 
-        if (text || localImgPath) {
-            posts.push({ text, link, img: localImgPath, date });
+        const localImages = [];
+
+        // Скачиваем все найденные картинки для поста
+        for (let idx = 0; idx < rawUrls.length; idx++) {
+            const rawUrl = rawUrls[idx];
+            const fileName = `case_${new Date(date).getTime()}_${idx}.jpg`;
+            const filePath = path.join(IMG_DIR, fileName);
+
+            if (fs.existsSync(filePath)) {
+                localImages.push(`./cases-img/${fileName}`);
+            } else {
+                console.log(`Скачиваю картинку ${idx + 1} из ${rawUrls.length} для поста...`);
+                const isSuccess = await downloadImage(rawUrl, filePath);
+                if (isSuccess) {
+                    localImages.push(`./cases-img/${fileName}`);
+                }
+            }
+        }
+
+        if (text || localImages.length > 0) {
+            posts.push({
+                text,
+                link,
+                // img — главная обложка для сетки (сохраняем для обратной совместимости)
+                img: localImages.length > 0 ? localImages[0] : null,
+                // images — массив всех фоток для слайдера в модалке
+                images: localImages,
+                date
+            });
         }
     }
 
@@ -154,6 +173,7 @@ async function run() {
             await new Promise(resolve => setTimeout(resolve, 1000));
         }
 
+        // Удаляем возможные дубликаты постов
         const uniquePosts = Array.from(new Map(allPosts.map(item => [item.link, item])).values());
         uniquePosts.sort((a, b) => new Date(b.date) - new Date(a.date));
 

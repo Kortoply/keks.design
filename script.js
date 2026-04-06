@@ -1,6 +1,7 @@
 document.addEventListener('DOMContentLoaded', () => {
     initScrollAnimations();
     fetchTelegramPosts();
+    initModal();
 });
 
 function initScrollAnimations() {
@@ -49,19 +50,14 @@ function renderNextBatch() {
 
     nextBatch.forEach((post, index) => {
         const card = document.createElement('a');
-        card.href = post.link || "#";
-        card.target = "_blank";
+        card.href = "#"; // Перехватываем ссылку для модального окна
+        card.className = `solid-card case-card reveal ${post.img ? '' : 'no-image'}`;
 
-        const hasImage = !!post.img;
-        // Добавляем класс no-image, если картинки нет
-        card.className = `solid-card case-card reveal ${hasImage ? '' : 'no-image'}`;
-
-        // Формируем красивую дату с годом
         const dateOptions = { day: 'numeric', month: 'short', year: 'numeric' };
         const formattedDate = new Date(post.date).toLocaleDateString('ru-RU', dateOptions);
 
         card.innerHTML = `
-            ${hasImage ? `
+            ${post.img ? `
             <div class="case-img-container">
                 <div class="skeleton-loader"></div>
                 <img class="case-img" alt="Case Image">
@@ -72,9 +68,15 @@ function renderNextBatch() {
             </div>
         `;
 
+        // Обработчик клика для открытия модалки
+        card.addEventListener('click', (e) => {
+            e.preventDefault();
+            openModal(post);
+        });
+
         feedContainer.appendChild(card);
 
-        if (hasImage) {
+        if (post.img) {
             const imgElement = card.querySelector('.case-img');
             const skeleton = card.querySelector('.skeleton-loader');
             const imgContainer = card.querySelector('.case-img-container');
@@ -90,7 +92,6 @@ function renderNextBatch() {
 
             tempImg.onerror = () => {
                 if(imgContainer) imgContainer.remove();
-                // Если картинка битая, переключаем карточку в режим no-image
                 card.classList.add('no-image');
             };
         }
@@ -102,4 +103,121 @@ function renderNextBatch() {
     loadMoreBtn.style.display = displayedCount >= allPosts.length ? 'none' : 'flex';
 }
 
-document.getElementById('load-more-btn').addEventListener('click', renderNextBatch);
+if(document.getElementById('load-more-btn')) {
+    document.getElementById('load-more-btn').addEventListener('click', renderNextBatch);
+}
+
+
+/* =========================================
+   Логика Модального Окна и Слайдера
+========================================= */
+let currentSlide = 0;
+let slideImages = [];
+
+function initModal() {
+    const modal = document.getElementById('case-modal');
+    const closeBtn = document.getElementById('modal-close');
+
+    // Закрытие по крестику
+    closeBtn.addEventListener('click', closeModal);
+
+    // Закрытие по клику вне контента (на черный фон)
+    modal.addEventListener('click', (e) => {
+        if (e.target === modal) closeModal();
+    });
+
+    // Закрытие по клавише Esc
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && modal.classList.contains('active')) closeModal();
+    });
+
+    // Кнопки слайдера
+    document.getElementById('slider-prev').addEventListener('click', () => changeSlide(-1));
+    document.getElementById('slider-next').addEventListener('click', () => changeSlide(1));
+}
+
+function openModal(post) {
+    const modal = document.getElementById('case-modal');
+    const sliderContainer = document.getElementById('modal-slider-container');
+    const track = document.getElementById('modal-slider-track');
+    const dotsContainer = document.getElementById('slider-dots');
+    const prevBtn = document.getElementById('slider-prev');
+    const nextBtn = document.getElementById('slider-next');
+
+    // Заполняем текст и дату
+    document.getElementById('modal-text').innerHTML = post.text || 'Без описания';
+
+    const dateOptions = { day: 'numeric', month: 'short', year: 'numeric' };
+    document.getElementById('modal-date').innerText = new Date(post.date).toLocaleDateString('ru-RU', dateOptions);
+
+    // Ссылки
+    document.getElementById('modal-link-tg').href = post.link;
+
+    // Сброс слайдера
+    track.innerHTML = '';
+    dotsContainer.innerHTML = '';
+    currentSlide = 0;
+    track.style.transform = `translateX(0%)`;
+
+    // Определяем массив картинок (поддерживаем старую структуру и новую)
+    slideImages = post.images && post.images.length > 0 ? post.images : (post.img ? [post.img] : []);
+
+    if (slideImages.length === 0) {
+        sliderContainer.style.display = 'none'; // Скрываем слайдер, если текстовый пост
+    } else {
+        sliderContainer.style.display = 'flex';
+
+        // Создаем картинки
+        slideImages.forEach((imgSrc, index) => {
+            const img = document.createElement('img');
+            img.src = imgSrc;
+            track.appendChild(img);
+
+            // Создаем точки, если картинок больше 1
+            if (slideImages.length > 1) {
+                const dot = document.createElement('div');
+                dot.className = `dot ${index === 0 ? 'active' : ''}`;
+                dot.addEventListener('click', () => goToSlide(index));
+                dotsContainer.appendChild(dot);
+            }
+        });
+
+        // Показываем/скрываем стрелки
+        if (slideImages.length > 1) {
+            prevBtn.classList.remove('hidden');
+            nextBtn.classList.remove('hidden');
+        } else {
+            prevBtn.classList.add('hidden');
+            nextBtn.classList.add('hidden');
+        }
+    }
+
+    // Показываем модалку и блокируем скролл сайта
+    modal.classList.add('active');
+    document.body.classList.add('no-scroll');
+}
+
+function closeModal() {
+    const modal = document.getElementById('case-modal');
+    modal.classList.remove('active');
+    document.body.classList.remove('no-scroll'); // Возвращаем скролл
+}
+
+function changeSlide(direction) {
+    let newIndex = currentSlide + direction;
+    if (newIndex < 0) newIndex = slideImages.length - 1; // Зацикливаем
+    if (newIndex >= slideImages.length) newIndex = 0;
+    goToSlide(newIndex);
+}
+
+function goToSlide(index) {
+    currentSlide = index;
+    const track = document.getElementById('modal-slider-track');
+    track.style.transform = `translateX(-${currentSlide * 100}%)`;
+
+    // Обновляем активную точку
+    const dots = document.querySelectorAll('.slider-dots .dot');
+    dots.forEach((dot, i) => {
+        dot.classList.toggle('active', i === currentSlide);
+    });
+}
