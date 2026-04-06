@@ -25,7 +25,6 @@ body {
     overflow-x: hidden;
 }
 
-/* Блокировка скролла, когда открыта модалка */
 body.no-scroll {
     overflow: hidden;
 }
@@ -217,7 +216,8 @@ body.no-scroll {
 ========================================= */
 .modal-overlay {
     position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-    background: rgba(0, 0, 0, 0.85); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+    /* Убран блюр ради производительности, затемнение сделано плотным */
+    background: rgba(0, 0, 0, 0.92);
     z-index: 1000; display: flex; justify-content: center; align-items: center;
     opacity: 0; pointer-events: none; transition: opacity 0.3s ease;
     padding: 1.5rem;
@@ -231,7 +231,7 @@ body.no-scroll {
     width: 100%; max-width: 800px; max-height: 90vh;
     display: flex; flex-direction: column; position: relative;
     transform: translateY(20px); transition: transform 0.3s ease;
-    overflow-y: auto; /* Позволяет листать контент, если текста много */
+    overflow: hidden; /* Скрываем внешний скролл, чтобы подвал был зафиксирован */
 }
 
 .modal-overlay.active .modal-content {
@@ -247,7 +247,16 @@ body.no-scroll {
 }
 .modal-close:hover { background: var(--text-main); color: var(--bg-base); transform: scale(1.05); }
 
-/* Слайдер внутри модалки */
+/* Зона, которая скроллится (картинка + текст) */
+.modal-scrollable {
+    overflow-y: auto;
+    flex-grow: 1;
+}
+
+/* Кастомизация ползунка для премиум-вида */
+.modal-scrollable::-webkit-scrollbar { width: 6px; }
+.modal-scrollable::-webkit-scrollbar-thumb { background: var(--border-hover); border-radius: 10px; }
+
 .modal-slider {
     position: relative; width: 100%; background: #050505;
     border-bottom: 1px solid var(--border-color); overflow: hidden;
@@ -286,10 +295,17 @@ body.no-scroll {
 
 .modal-body { padding: 2.5rem; display: flex; flex-direction: column; gap: 1.5rem; }
 .modal-body .case-text {
-    -webkit-line-clamp: unset; /* В модалке показываем весь текст */
+    -webkit-line-clamp: unset;
     overflow: visible; display: block; font-size: 1.05rem;
 }
-.modal-actions { display: flex; gap: 1rem; flex-wrap: wrap; margin-top: 1rem; }
+
+/* Прибитые кнопки (Подвал модалки) */
+.modal-actions {
+    display: flex; gap: 1rem; padding: 1.5rem 2.5rem;
+    background: var(--card-bg);
+    border-top: 1px solid var(--border-color);
+    flex-shrink: 0; /* Не дает блоку сжаться */
+}
 
 
 /* Подвал */
@@ -309,6 +325,19 @@ body.no-scroll {
     .hidden-mobile { display: none; }
     .hero-title { font-size: 2.8rem; }
     .footer-top { flex-direction: column; gap: 2rem; align-items: flex-start; }
-    .modal-actions { flex-direction: column; }
-    .modal-actions a { width: 100%; }
+
+    .modal-overlay { padding: 1rem; }
+    .modal-body { padding: 1.5rem; }
+
+    /* Делаем кнопки в ряд на мобилках */
+    .modal-actions {
+        padding: 1rem 1.5rem;
+        flex-direction: row;
+        gap: 0.5rem;
+    }
+    .modal-actions a {
+        width: 50%; /* Каждая кнопка занимает половину ширины */
+        padding: 0.9rem 0.5rem;
+        font-size: 0.85rem;
+    }
 }
