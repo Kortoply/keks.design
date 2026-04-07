@@ -11,7 +11,6 @@ document.addEventListener('DOMContentLoaded', () => {
 function initScrollAnimations() {
     const reveals = document.querySelectorAll('.reveal');
     const navbarPill = document.getElementById('navbar');
-    // Находим наш новый контейнер скролла
     const appWrapper = document.getElementById('app-wrapper');
 
     const observer = new IntersectionObserver((entries, obs) => {
@@ -31,11 +30,9 @@ function initScrollAnimations() {
 
     let ticking = false;
 
-    // Слушаем скролл внутри нашего контейнера, а не у окна
     (appWrapper || window).addEventListener('scroll', () => {
         if (!ticking) {
             window.requestAnimationFrame(() => {
-                // Если мы в appWrapper — берем его scrollTop, иначе window.scrollY (для страховки)
                 const scrollTop = appWrapper ? appWrapper.scrollTop : window.scrollY;
                 if (scrollTop > 50) navbarPill.classList.add('scrolled');
                 else navbarPill.classList.remove('scrolled');
@@ -197,15 +194,31 @@ let slideImages = [];
 function initModal() {
     const modal = document.getElementById('case-modal');
     const closeBtn = document.getElementById('modal-close');
+    const lightbox = document.getElementById('lightbox-overlay');
+    const lightboxCloseBtn = document.getElementById('lightbox-close');
 
+    // Закрытие основного модального окна
     closeBtn.addEventListener('click', closeModal);
-
     modal.addEventListener('click', (e) => {
         if (e.target === modal) closeModal();
     });
 
+    // Закрытие полноэкранного Lightbox
+    lightboxCloseBtn.addEventListener('click', closeLightbox);
+    lightbox.addEventListener('click', (e) => {
+        // Закрываем, если клик был не по самой картинке (а по темному фону вокруг)
+        if (e.target !== document.getElementById('lightbox-img')) closeLightbox();
+    });
+
+    // Обработка клавиши Esc
     document.addEventListener('keydown', (e) => {
-        if (e.key === 'Escape' && modal.classList.contains('active')) closeModal();
+        if (e.key === 'Escape') {
+            if (lightbox.classList.contains('active')) {
+                closeLightbox(); // Сначала закрываем фото на весь экран
+            } else if (modal.classList.contains('active')) {
+                closeModal(); // Если фото закрыто, закрываем модалку с кейсом
+            }
+        }
     });
 
     document.getElementById('slider-prev').addEventListener('click', () => changeSlide(-1));
@@ -235,8 +248,6 @@ function openModal(post) {
     const dateOptions = { day: 'numeric', month: 'short', year: 'numeric' };
     document.getElementById('modal-date').innerText = new Date(post.date).toLocaleDateString('ru-RU', dateOptions);
 
-    document.getElementById('modal-link-tg').href = post.link;
-
     track.innerHTML = '';
     dotsContainer.innerHTML = '';
     currentSlide = 0;
@@ -256,6 +267,10 @@ function openModal(post) {
         slideImages.forEach((imgSrc, index) => {
             const img = document.createElement('img');
             img.src = imgSrc;
+
+            // ДОБАВЛЕНО: Открываем картинку на весь экран по клику
+            img.addEventListener('click', () => openLightbox(imgSrc));
+
             track.appendChild(img);
 
             if (slideImages.length > 1) {
@@ -280,7 +295,6 @@ function openModal(post) {
 
     modal.classList.add('active');
 
-    // Блокируем скролл у нашего нового контейнера
     const appWrapper = document.getElementById('app-wrapper');
     if(appWrapper) appWrapper.classList.add('no-scroll');
 }
@@ -289,9 +303,23 @@ function closeModal() {
     const modal = document.getElementById('case-modal');
     modal.classList.remove('active');
 
-    // Возвращаем скролл нашему новому контейнеру
     const appWrapper = document.getElementById('app-wrapper');
     if(appWrapper) appWrapper.classList.remove('no-scroll');
+}
+
+// Открытие картинки на весь экран
+function openLightbox(src) {
+    const lightbox = document.getElementById('lightbox-overlay');
+    const lightboxImg = document.getElementById('lightbox-img');
+
+    lightboxImg.src = src;
+    lightbox.classList.add('active');
+}
+
+// Закрытие картинки на весь экран
+function closeLightbox() {
+    const lightbox = document.getElementById('lightbox-overlay');
+    lightbox.classList.remove('active');
 }
 
 function changeSlide(direction) {
