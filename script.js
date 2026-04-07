@@ -6,7 +6,7 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 /* =========================================
-   Анимация скролла и шапки
+   Анимация скролла и шапки (Оптимизировано для телефонов)
 ========================================= */
 function initScrollAnimations() {
     const reveals = document.querySelectorAll('.reveal');
@@ -27,10 +27,18 @@ function initScrollAnimations() {
         document.querySelectorAll('#hero .reveal, header.reveal').forEach(el => el.classList.add('active'));
     }, 50);
 
+    // Оптимизация производительности скролла через requestAnimationFrame
+    let ticking = false;
     window.addEventListener('scroll', () => {
-        if (window.scrollY > 50) navbarPill.classList.add('scrolled');
-        else navbarPill.classList.remove('scrolled');
-    });
+        if (!ticking) {
+            window.requestAnimationFrame(() => {
+                if (window.scrollY > 50) navbarPill.classList.add('scrolled');
+                else navbarPill.classList.remove('scrolled');
+                ticking = false;
+            });
+            ticking = true;
+        }
+    }, { passive: true });
 }
 
 /* =========================================
@@ -79,15 +87,29 @@ let displayedCount = 0;
 const POSTS_PER_PAGE = 6;
 
 async function fetchTelegramPosts() {
+    const feedContainer = document.getElementById('tg-feed');
+    const statusContainer = document.getElementById('tg-status-container');
+    const statusText = document.getElementById('tg-status-text');
+    const spinner = document.querySelector('.loader-spinner');
+
     try {
         const response = await fetch(`./posts.json?t=${new Date().getTime()}`);
         if (!response.ok) throw new Error('Ошибка загрузки JSON');
 
         allPosts = await response.json();
-        document.getElementById('tg-feed').innerHTML = '';
-        renderNextBatch();
+
+        if (allPosts && allPosts.length > 0) {
+            statusContainer.style.display = 'none';
+            feedContainer.style.display = 'grid';
+            feedContainer.innerHTML = '';
+            renderNextBatch();
+        } else {
+            throw new Error('Кейсов пока нет');
+        }
     } catch (error) {
         console.error("Не удалось загрузить посты:", error);
+        if (spinner) spinner.style.display = 'none';
+        statusText.innerHTML = 'Кейсы временно недоступны.<br>Посмотрите их в нашем <a href="https://t.me/casebykeks" target="_blank" style="color: var(--text-main); text-decoration: underline;">Telegram-канале ↗</a>.';
     }
 }
 
@@ -217,13 +239,12 @@ function openModal(post) {
 
     slideImages = post.images && post.images.length > 0 ? post.images : (post.img ? [post.img] : []);
 
-    // Проверяем наличие картинок для изменения ширины и отображения сетки
     if (slideImages.length === 0) {
-        modalContent.classList.add('no-media'); // Прячет сетку и растягивает текст
+        modalContent.classList.add('no-media');
         sliderContainer.style.display = 'none';
         modalBodyContainer.classList.add('no-image');
     } else {
-        modalContent.classList.remove('no-media'); // Возвращает сетку и 55/45
+        modalContent.classList.remove('no-media');
         sliderContainer.style.display = 'flex';
         modalBodyContainer.classList.remove('no-image');
 
@@ -249,11 +270,8 @@ function openModal(post) {
         }
     }
 
-    // ВАЖНО: СБРАСЫВАЕМ СКРОЛЛ НА САМЫЙ ВЕРХ!
     const scrollableArea = document.querySelector('.modal-scrollable');
-    if (scrollableArea) {
-        scrollableArea.scrollTop = 0;
-    }
+    if (scrollableArea) scrollableArea.scrollTop = 0;
 
     modal.classList.add('active');
     document.body.classList.add('no-scroll');
