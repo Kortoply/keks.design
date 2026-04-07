@@ -35,6 +35,20 @@ body.no-scroll {
 }
 
 /* =========================================
+   Запрет на перетаскивание картинок
+========================================= */
+img {
+    -webkit-user-drag: none;
+    -khtml-user-drag: none;
+    -moz-user-drag: none;
+    -o-user-drag: none;
+    user-drag: none;
+    user-select: none;
+    -webkit-user-select: none;
+    -ms-user-select: none;
+}
+
+/* =========================================
    Уникальная Шапка
 ========================================= */
 .header-wrapper {
@@ -97,7 +111,15 @@ body.no-scroll {
    ГЛАВНЫЙ ЭКРАН (HERO)
 ========================================= */
 .section { padding: 8rem 2rem 4rem; max-width: 1200px; margin: 0 auto; }
-.hero { min-height: 100vh; display: flex; align-items: center; padding-top: 8rem; }
+
+.hero {
+    min-height: 100vh;
+    min-height: 100dvh;
+    display: flex;
+    align-items: center;
+    padding-top: 8rem;
+}
+
 .hero-container { width: 100%; max-width: 1000px; display: flex; flex-direction: column; }
 
 .hero-status-pill {
@@ -114,14 +136,13 @@ body.no-scroll {
     letter-spacing: -0.04em;
     line-height: 1.1;
     margin-bottom: 6rem;
-    white-space: nowrap; /* Строго одна строка для ПК (без переносов) */
+    white-space: nowrap;
 }
 
 #typewriter { position: relative; display: inline; }
 #typewriter::after { content: '|'; font-weight: 300; color: var(--text-main); animation: blink 1s step-end infinite; margin-left: 4px; }
 @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
 
-/* Убрана верхняя рамка */
 .hero-divider { display: flex; justify-content: space-between; align-items: flex-end; padding-top: 2.5rem; gap: 2rem; }
 .hero-desc { font-size: 1.15rem; color: var(--text-muted); line-height: 1.6; max-width: 450px; }
 .hero-buttons { display: flex; gap: 1rem; flex-shrink: 0; }
@@ -277,9 +298,25 @@ body.no-scroll {
 /* =========================================
    SPLIT-SCREEN Модальное окно (Pop-up)
 ========================================= */
-.modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.95); z-index: 1000; display: flex; justify-content: center; align-items: center; opacity: 0; pointer-events: none; transition: opacity 0.4s ease; padding: 2rem; }
+.modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; height: 100dvh; background: rgba(0, 0, 0, 0.95); z-index: 1000; display: flex; justify-content: center; align-items: center; opacity: 0; pointer-events: none; transition: opacity 0.4s ease; padding: 2rem; }
 .modal-overlay.active { opacity: 1; pointer-events: auto; }
-.premium-split-modal { width: 100%; max-width: 1200px; height: 85vh; display: flex; flex-direction: row; background: var(--bg-base); border: 1px solid var(--border-hover); border-radius: 20px; position: relative; transform: translateY(30px) scale(0.98); transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1); overflow: hidden; }
+
+.premium-split-modal {
+    width: 100%;
+    max-width: 1200px;
+    height: 85vh;
+    height: 85dvh;
+    display: flex;
+    flex-direction: row;
+    background: var(--bg-base);
+    border: 1px solid var(--border-hover);
+    border-radius: 20px;
+    position: relative;
+    transform: translateY(30px) scale(0.98);
+    transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    overflow: hidden;
+}
+
 .modal-overlay.active .premium-split-modal { transform: translateY(0) scale(1); }
 .premium-split-modal.no-media .modal-left-pane { display: none; }
 .premium-split-modal.no-media .modal-right-pane { width: 100%; }
@@ -369,9 +406,30 @@ body.no-scroll {
     .footer-socials { justify-content: flex-start; }
 
     .modal-overlay { padding: 1rem; }
-    .premium-split-modal { flex-direction: column; height: 90vh; border-radius: 16px; }
-    .modal-left-pane { width: 100%; height: 40vh; border-right: none; border-bottom: 1px solid var(--border-color); flex-shrink: 0; }
+
+    .premium-split-modal {
+        flex-direction: column;
+        height: 90vh;
+        height: 90dvh;
+        border-radius: 16px;
+    }
+
+    .modal-left-pane {
+        width: 100%;
+        height: 40vh;
+        height: 40dvh;
+        border-right: none;
+        border-bottom: 1px solid var(--border-color);
+        flex-shrink: 0;
+    }
+
     .modal-right-pane { width: 100%; height: auto; flex: 1; min-height: 0; }
+
+    /* Принудительно активная кнопка LZT на мобильных (Планшеты и Телефоны) */
+    .sm-cell-lzt { background: #FFFFFF; }
+    .sm-cell-lzt .sm-label { color: #666666; }
+    .sm-cell-lzt .sm-price { color: #000000; }
+    .sm-cell-lzt .lzt-icon { color: #000000; }
 }
 
 /* Мобильные телефоны */
