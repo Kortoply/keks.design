@@ -6,11 +6,13 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 /* =========================================
-   Анимация скролла и шапки (Оптимизировано для телефонов)
+   Анимация скролла и шапки
 ========================================= */
 function initScrollAnimations() {
     const reveals = document.querySelectorAll('.reveal');
     const navbarPill = document.getElementById('navbar');
+    // Находим наш новый контейнер скролла
+    const appWrapper = document.getElementById('app-wrapper');
 
     const observer = new IntersectionObserver((entries, obs) => {
         entries.forEach(entry => {
@@ -27,12 +29,15 @@ function initScrollAnimations() {
         document.querySelectorAll('#hero .reveal, header.reveal').forEach(el => el.classList.add('active'));
     }, 50);
 
-    // Оптимизация производительности скролла через requestAnimationFrame
     let ticking = false;
-    window.addEventListener('scroll', () => {
+
+    // Слушаем скролл внутри нашего контейнера, а не у окна
+    (appWrapper || window).addEventListener('scroll', () => {
         if (!ticking) {
             window.requestAnimationFrame(() => {
-                if (window.scrollY > 50) navbarPill.classList.add('scrolled');
+                // Если мы в appWrapper — берем его scrollTop, иначе window.scrollY (для страховки)
+                const scrollTop = appWrapper ? appWrapper.scrollTop : window.scrollY;
+                if (scrollTop > 50) navbarPill.classList.add('scrolled');
                 else navbarPill.classList.remove('scrolled');
                 ticking = false;
             });
@@ -93,7 +98,7 @@ async function fetchTelegramPosts() {
     const spinner = document.querySelector('.loader-spinner');
 
     try {
-        const response = await fetch(`./posts.json?t=${new Date().getTime()}`);
+        const response = await fetch(`/posts.json?t=${new Date().getTime()}`);
         if (!response.ok) throw new Error('Ошибка загрузки JSON');
 
         allPosts = await response.json();
@@ -274,13 +279,19 @@ function openModal(post) {
     if (scrollableArea) scrollableArea.scrollTop = 0;
 
     modal.classList.add('active');
-    document.body.classList.add('no-scroll');
+
+    // Блокируем скролл у нашего нового контейнера
+    const appWrapper = document.getElementById('app-wrapper');
+    if(appWrapper) appWrapper.classList.add('no-scroll');
 }
 
 function closeModal() {
     const modal = document.getElementById('case-modal');
     modal.classList.remove('active');
-    document.body.classList.remove('no-scroll');
+
+    // Возвращаем скролл нашему новому контейнеру
+    const appWrapper = document.getElementById('app-wrapper');
+    if(appWrapper) appWrapper.classList.remove('no-scroll');
 }
 
 function changeSlide(direction) {
