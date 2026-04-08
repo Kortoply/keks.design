@@ -351,10 +351,15 @@ let isDragging = false;
 let dragStartX = 0;
 let dragStartY = 0;
 
+// Переменные для зума двумя пальцами
+let initialPinchDistance = null;
+let initialPinchScale = 1;
+
 function resetCanvas() {
     currentScale = 1;
     currentPanX = 0;
     currentPanY = 0;
+    initialPinchDistance = null;
     const zoomSlider = document.getElementById('zoom-slider');
     if (zoomSlider) zoomSlider.value = 1;
     applyTransformToActiveImage(true);
@@ -382,7 +387,14 @@ function updateZoom(newScale) {
     currentScale = Math.max(0.5, Math.min(newScale, 3));
     const zoomSlider = document.getElementById('zoom-slider');
     if (zoomSlider) zoomSlider.value = currentScale;
-    applyTransformToActiveImage(true);
+    applyTransformToActiveImage(false); // Делаем false, чтобы при pinch-to-zoom было плавно за пальцами
+}
+
+// Вспомогательная функция для расчета расстояния между 2 пальцами
+function getPinchDistance(touches) {
+    const dx = touches[0].clientX - touches[1].clientX;
+    const dy = touches[0].clientY - touches[1].clientY;
+    return Math.sqrt(dx * dx + dy * dy);
 }
 
 // Инициализация событий канваса
@@ -396,7 +408,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (zoomSlider) {
         zoomSlider.addEventListener('input', (e) => {
-            updateZoom(parseFloat(e.target.value));
+            currentScale = parseFloat(e.target.value);
+            applyTransformToActiveImage(true);
         });
     }
 
@@ -444,24 +457,52 @@ document.addEventListener('DOMContentLoaded', () => {
         isDragging = false;
     });
 
-    // --- ЛОГИКА ПЕРЕТАСКИВАНИЯ (СЕНСОР / MOBILE) ---
+    // --- ЛОГИКА ПЕРЕТАСКИВАНИЯ И ЗУМА (СЕНСОР / MOBILE) ---
     track.addEventListener('touchstart', (e) => {
-        if (e.target.tagName === 'IMG' && e.touches.length === 1) {
-            isDragging = true;
-            dragStartX = e.touches[0].clientX - currentPanX;
-            dragStartY = e.touches[0].clientY - currentPanY;
+        if (e.target.tagName === 'IMG') {
+            if (e.touches.length === 1) {
+                // Один палец — панорамирование
+                isDragging = true;
+                dragStartX = e.touches[0].clientX - currentPanX;
+                dragStartY = e.touches[0].clientY - currentPanY;
+            } else if (e.touches.length === 2) {
+                // Два пальца — зум (pinch)
+                isDragging = false;
+                initialPinchDistance = getPinchDistance(e.touches);
+                initialPinchScale = currentScale;
+            }
         }
     }, { passive: false });
 
     track.addEventListener('touchmove', (e) => {
-        if (!isDragging || e.touches.length !== 1) return;
-        e.preventDefault();
-        currentPanX = e.touches[0].clientX - dragStartX;
-        currentPanY = e.touches[0].clientY - dragStartY;
-        applyTransformToActiveImage(false);
+        if (e.target.tagName !== 'IMG') return;
+
+        if (isDragging && e.touches.length === 1) {
+            e.preventDefault();
+            currentPanX = e.touches[0].clientX - dragStartX;
+            currentPanY = e.touches[0].clientY - dragStartY;
+            applyTransformToActiveImage(false);
+        } else if (e.touches.length === 2) {
+            e.preventDefault();
+            if (initialPinchDistance) {
+                const currentDistance = getPinchDistance(e.touches);
+                const scaleChange = currentDistance / initialPinchDistance;
+                updateZoom(initialPinchScale * scaleChange);
+            }
+        }
     }, { passive: false });
 
-    track.addEventListener('touchend', () => {
-        isDragging = false;
+    track.addEventListener('touchend', (e) => {
+        if (e.touches.length < 2) {
+            initialPinchDistance = null;
+        }
+        if (e.touches.length === 0) {
+            isDragging = false;
+        } else if (e.touches.length === 1) {
+            // Если убрали один палец, продолжаем таскать картинку оставшимся
+            isDragging = true;
+            dragStartX = e.touches[0].clientX - currentPanX;
+            dragStartY = e.touches[0].clientY - currentPanY;
+        }
     });
 });
