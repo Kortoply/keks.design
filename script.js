@@ -206,7 +206,6 @@ function initModal() {
     // Закрытие полноэкранного Lightbox
     lightboxCloseBtn.addEventListener('click', closeLightbox);
     lightbox.addEventListener('click', (e) => {
-        // Закрываем, если клик был не по самой картинке (а по темному фону вокруг)
         if (e.target !== document.getElementById('lightbox-img')) closeLightbox();
     });
 
@@ -214,9 +213,9 @@ function initModal() {
     document.addEventListener('keydown', (e) => {
         if (e.key === 'Escape') {
             if (lightbox.classList.contains('active')) {
-                closeLightbox(); // Сначала закрываем фото на весь экран
+                closeLightbox();
             } else if (modal.classList.contains('active')) {
-                closeModal(); // Если фото закрыто, закрываем модалку с кейсом
+                closeModal();
             }
         }
     });
@@ -261,15 +260,13 @@ function openModal(post) {
         modalBodyContainer.classList.add('no-image');
     } else {
         modalContent.classList.remove('no-media');
-        sliderContainer.style.display = 'flex';
-        modalBodyContainer.classList.remove('no-image');
 
         slideImages.forEach((imgSrc, index) => {
             const img = document.createElement('img');
             img.src = imgSrc;
 
-            // ДОБАВЛЕНО: Открываем картинку на весь экран по клику
-            img.addEventListener('click', () => openLightbox(imgSrc));
+            // Запрещаем стандартное перетаскивание браузером для кастомного панорамирования
+            img.ondragstart = () => false;
 
             track.appendChild(img);
 
@@ -288,6 +285,11 @@ function openModal(post) {
             prevBtn.classList.add('hidden');
             nextBtn.classList.add('hidden');
         }
+
+        sliderContainer.style.display = 'flex';
+        document.getElementById('canvas-controls').style.display = 'flex'; // Включить панель
+        resetCanvas(); // Сбрасываем зум при открытии
+        modalBodyContainer.classList.remove('no-image');
     }
 
     const scrollableArea = document.querySelector('.modal-scrollable');
@@ -307,7 +309,6 @@ function closeModal() {
     if(appWrapper) appWrapper.classList.remove('no-scroll');
 }
 
-// Открытие картинки на весь экран
 function openLightbox(src) {
     const lightbox = document.getElementById('lightbox-overlay');
     const lightboxImg = document.getElementById('lightbox-img');
@@ -316,7 +317,6 @@ function openLightbox(src) {
     lightbox.classList.add('active');
 }
 
-// Закрытие картинки на весь экран
 function closeLightbox() {
     const lightbox = document.getElementById('lightbox-overlay');
     lightbox.classList.remove('active');
@@ -330,6 +330,7 @@ function changeSlide(direction) {
 }
 
 function goToSlide(index) {
+    resetCanvas();
     currentSlide = index;
     const track = document.getElementById('modal-slider-track');
     track.style.transform = `translateX(-${currentSlide * 100}%)`;
@@ -339,3 +340,128 @@ function goToSlide(index) {
         dot.classList.toggle('active', i === currentSlide);
     });
 }
+
+/* =========================================
+   КАНВАС: Зум и Панорамирование
+========================================= */
+let currentScale = 1;
+let currentPanX = 0;
+let currentPanY = 0;
+let isDragging = false;
+let dragStartX = 0;
+let dragStartY = 0;
+
+function resetCanvas() {
+    currentScale = 1;
+    currentPanX = 0;
+    currentPanY = 0;
+    const zoomSlider = document.getElementById('zoom-slider');
+    if (zoomSlider) zoomSlider.value = 1;
+    applyTransformToActiveImage(true);
+}
+
+function applyTransformToActiveImage(smooth = false) {
+    const track = document.getElementById('modal-slider-track');
+    if (!track) return;
+    const images = track.querySelectorAll('img');
+    const activeImg = images[currentSlide];
+
+    if (activeImg) {
+        activeImg.style.transition = smooth ? 'transform 0.2s ease-out' : 'none';
+        activeImg.style.transform = `translate(${currentPanX}px, ${currentPanY}px) scale(${currentScale})`;
+    }
+
+    images.forEach((img, idx) => {
+        if (idx !== currentSlide) {
+            img.style.transform = 'translate(0px, 0px) scale(1)';
+        }
+    });
+}
+
+function updateZoom(newScale) {
+    currentScale = Math.max(0.5, Math.min(newScale, 3));
+    const zoomSlider = document.getElementById('zoom-slider');
+    if (zoomSlider) zoomSlider.value = currentScale;
+    applyTransformToActiveImage(true);
+}
+
+// Инициализация событий канваса
+document.addEventListener('DOMContentLoaded', () => {
+    const track = document.getElementById('modal-slider-track');
+    const zoomSlider = document.getElementById('zoom-slider');
+    const fullscreenBtn = document.getElementById('fullscreen-btn');
+    const resetBtn = document.getElementById('reset-btn');
+
+    if (!track) return;
+
+    if (zoomSlider) {
+        zoomSlider.addEventListener('input', (e) => {
+            updateZoom(parseFloat(e.target.value));
+        });
+    }
+
+    // Железобетонная привязка сброса
+    if (resetBtn) {
+        resetBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            resetCanvas();
+        });
+    }
+
+    track.addEventListener('wheel', (e) => {
+        e.preventDefault();
+        const delta = e.deltaY < 0 ? 0.1 : -0.1;
+        updateZoom(currentScale + delta);
+    });
+
+    if (fullscreenBtn) {
+        fullscreenBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            const activeImgSrc = slideImages[currentSlide];
+            if (activeImgSrc) openLightbox(activeImgSrc);
+        });
+    }
+
+    // --- ЛОГИКА ПЕРЕТАСКИВАНИЯ (МЫШЬ) ---
+    track.addEventListener('mousedown', (e) => {
+        if (e.target.tagName === 'IMG') {
+            isDragging = true;
+            dragStartX = e.clientX - currentPanX;
+            dragStartY = e.clientY - currentPanY;
+        }
+    });
+
+    window.addEventListener('mousemove', (e) => {
+        if (!isDragging) return;
+        currentPanX = e.clientX - dragStartX;
+        currentPanY = e.clientY - dragStartY;
+        applyTransformToActiveImage(false);
+    });
+
+    window.addEventListener('mouseup', () => {
+        isDragging = false;
+    });
+
+    // --- ЛОГИКА ПЕРЕТАСКИВАНИЯ (СЕНСОР / MOBILE) ---
+    track.addEventListener('touchstart', (e) => {
+        if (e.target.tagName === 'IMG' && e.touches.length === 1) {
+            isDragging = true;
+            dragStartX = e.touches[0].clientX - currentPanX;
+            dragStartY = e.touches[0].clientY - currentPanY;
+        }
+    }, { passive: false });
+
+    track.addEventListener('touchmove', (e) => {
+        if (!isDragging || e.touches.length !== 1) return;
+        e.preventDefault();
+        currentPanX = e.touches[0].clientX - dragStartX;
+        currentPanY = e.touches[0].clientY - dragStartY;
+        applyTransformToActiveImage(false);
+    }, { passive: false });
+
+    track.addEventListener('touchend', () => {
+        isDragging = false;
+    });
+});
