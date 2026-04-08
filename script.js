@@ -6,6 +6,20 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 /* =========================================
+   ГЛОБАЛЬНЫЙ ЗАПРЕТ ЗУМА СТРАНИЦЫ (iOS / Android)
+========================================= */
+document.addEventListener('touchmove', (e) => {
+    if (e.touches.length > 1) {
+        const inModalTrack = e.target.closest('#modal-slider-track');
+        const inLightboxTrack = e.target.closest('#lightbox-track');
+        if (!inModalTrack && !inLightboxTrack) {
+            e.preventDefault();
+        }
+    }
+}, { passive: false });
+
+
+/* =========================================
    Анимация скролла и шапки
 ========================================= */
 function initScrollAnimations() {
@@ -197,19 +211,20 @@ function initModal() {
     const lightbox = document.getElementById('lightbox-overlay');
     const lightboxCloseBtn = document.getElementById('lightbox-close');
 
-    // Закрытие основного модального окна
     closeBtn.addEventListener('click', closeModal);
     modal.addEventListener('click', (e) => {
         if (e.target === modal) closeModal();
     });
 
-    // Закрытие полноэкранного Lightbox
     lightboxCloseBtn.addEventListener('click', closeLightbox);
+
     lightbox.addEventListener('click', (e) => {
-        if (e.target !== document.getElementById('lightbox-img')) closeLightbox();
+        // Закрываем, только если кликнули по самой подложке (мимо фото и мимо дока)
+        if (e.target === lightbox || e.target.classList.contains('lightbox-track')) {
+            closeLightbox();
+        }
     });
 
-    // Обработка клавиши Esc
     document.addEventListener('keydown', (e) => {
         if (e.key === 'Escape') {
             if (lightbox.classList.contains('active')) {
@@ -264,8 +279,8 @@ function openModal(post) {
         slideImages.forEach((imgSrc, index) => {
             const img = document.createElement('img');
             img.src = imgSrc;
-
-            // Запрещаем стандартное перетаскивание браузером для кастомного панорамирования
+            // Установка атрибута для надежности во всех браузерах
+            img.setAttribute('draggable', 'false');
             img.ondragstart = () => false;
 
             track.appendChild(img);
@@ -287,8 +302,8 @@ function openModal(post) {
         }
 
         sliderContainer.style.display = 'flex';
-        document.getElementById('canvas-controls').style.display = 'flex'; // Включить панель
-        resetCanvas(); // Сбрасываем зум при открытии
+        document.getElementById('canvas-controls').style.display = 'flex';
+        resetCanvas();
         modalBodyContainer.classList.remove('no-image');
     }
 
@@ -314,6 +329,7 @@ function openLightbox(src) {
     const lightboxImg = document.getElementById('lightbox-img');
 
     lightboxImg.src = src;
+    resetLbCanvas();
     lightbox.classList.add('active');
 }
 
@@ -341,8 +357,9 @@ function goToSlide(index) {
     });
 }
 
+
 /* =========================================
-   КАНВАС: Зум и Панорамирование
+   КАНВАС: Зум и Панорамирование (МОДАЛКА)
 ========================================= */
 let currentScale = 1;
 let currentPanX = 0;
@@ -350,8 +367,6 @@ let currentPanY = 0;
 let isDragging = false;
 let dragStartX = 0;
 let dragStartY = 0;
-
-// Переменные для зума двумя пальцами
 let initialPinchDistance = null;
 let initialPinchScale = 1;
 
@@ -384,125 +399,243 @@ function applyTransformToActiveImage(smooth = false) {
 }
 
 function updateZoom(newScale) {
-    currentScale = Math.max(0.5, Math.min(newScale, 3));
+    currentScale = Math.max(0.5, Math.min(newScale, 4));
     const zoomSlider = document.getElementById('zoom-slider');
     if (zoomSlider) zoomSlider.value = currentScale;
-    applyTransformToActiveImage(false); // Делаем false, чтобы при pinch-to-zoom было плавно за пальцами
+    applyTransformToActiveImage(false);
 }
 
-// Вспомогательная функция для расчета расстояния между 2 пальцами
+/* =========================================
+   КАНВАС: Зум и Панорамирование (ЛАЙТБОКС)
+========================================= */
+let lbScale = 1;
+let lbPanX = 0;
+let lbPanY = 0;
+let lbIsDragging = false;
+let lbDragStartX = 0;
+let lbDragStartY = 0;
+let lbInitialPinchDistance = null;
+let lbInitialPinchScale = 1;
+
+function resetLbCanvas() {
+    lbScale = 1;
+    lbPanX = 0;
+    lbPanY = 0;
+    lbInitialPinchDistance = null;
+    const slider = document.getElementById('lb-zoom-slider');
+    if (slider) slider.value = 1;
+    applyLbTransform(true);
+}
+
+function applyLbTransform(smooth = false) {
+    const img = document.getElementById('lightbox-img');
+    if (!img) return;
+    img.style.transition = smooth ? 'transform 0.2s ease-out' : 'none';
+    img.style.transform = `translate(${lbPanX}px, ${lbPanY}px) scale(${lbScale})`;
+}
+
+function updateLbZoom(newScale) {
+    lbScale = Math.max(0.5, Math.min(newScale, 5));
+    const slider = document.getElementById('lb-zoom-slider');
+    if (slider) slider.value = lbScale;
+    applyLbTransform(false);
+}
+
 function getPinchDistance(touches) {
     const dx = touches[0].clientX - touches[1].clientX;
     const dy = touches[0].clientY - touches[1].clientY;
     return Math.sqrt(dx * dx + dy * dy);
 }
 
-// Инициализация событий канваса
+/* =========================================
+   ИНИЦИАЛИЗАЦИЯ ИВЕНТОВ КАНВАСА
+========================================= */
 document.addEventListener('DOMContentLoaded', () => {
+
+    // --- 1. ПРИВЯЗКИ ДЛЯ МОДАЛКИ ---
     const track = document.getElementById('modal-slider-track');
     const zoomSlider = document.getElementById('zoom-slider');
     const fullscreenBtn = document.getElementById('fullscreen-btn');
     const resetBtn = document.getElementById('reset-btn');
 
-    if (!track) return;
-
-    if (zoomSlider) {
-        zoomSlider.addEventListener('input', (e) => {
-            currentScale = parseFloat(e.target.value);
-            applyTransformToActiveImage(true);
-        });
-    }
-
-    // Железобетонная привязка сброса
-    if (resetBtn) {
-        resetBtn.addEventListener('click', (e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            resetCanvas();
-        });
-    }
-
-    track.addEventListener('wheel', (e) => {
-        e.preventDefault();
-        const delta = e.deltaY < 0 ? 0.1 : -0.1;
-        updateZoom(currentScale + delta);
-    });
-
-    if (fullscreenBtn) {
-        fullscreenBtn.addEventListener('click', (e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            const activeImgSrc = slideImages[currentSlide];
-            if (activeImgSrc) openLightbox(activeImgSrc);
-        });
-    }
-
-    // --- ЛОГИКА ПЕРЕТАСКИВАНИЯ (МЫШЬ) ---
-    track.addEventListener('mousedown', (e) => {
-        if (e.target.tagName === 'IMG') {
-            isDragging = true;
-            dragStartX = e.clientX - currentPanX;
-            dragStartY = e.clientY - currentPanY;
+    if (track) {
+        if (zoomSlider) {
+            zoomSlider.addEventListener('input', (e) => {
+                currentScale = parseFloat(e.target.value);
+                applyTransformToActiveImage(true);
+            });
         }
-    });
 
-    window.addEventListener('mousemove', (e) => {
-        if (!isDragging) return;
-        currentPanX = e.clientX - dragStartX;
-        currentPanY = e.clientY - dragStartY;
-        applyTransformToActiveImage(false);
-    });
+        if (resetBtn) {
+            resetBtn.addEventListener('click', (e) => {
+                e.preventDefault(); e.stopPropagation(); resetCanvas();
+            });
+        }
 
-    window.addEventListener('mouseup', () => {
-        isDragging = false;
-    });
+        track.addEventListener('wheel', (e) => {
+            e.preventDefault();
+            const delta = e.deltaY < 0 ? 0.1 : -0.1;
+            updateZoom(currentScale + delta);
+        });
 
-    // --- ЛОГИКА ПЕРЕТАСКИВАНИЯ И ЗУМА (СЕНСОР / MOBILE) ---
-    track.addEventListener('touchstart', (e) => {
-        if (e.target.tagName === 'IMG') {
-            if (e.touches.length === 1) {
-                // Один палец — панорамирование
+        if (fullscreenBtn) {
+            fullscreenBtn.addEventListener('click', (e) => {
+                e.preventDefault(); e.stopPropagation();
+                const activeImgSrc = slideImages[currentSlide];
+                if (activeImgSrc) openLightbox(activeImgSrc);
+            });
+        }
+
+        // Мышь
+        track.addEventListener('mousedown', (e) => {
+            if (e.target.tagName === 'IMG') {
+                e.preventDefault(); // КРИТИЧНО ДЛЯ FIREFOX (отключает системный drag)
+                isDragging = true;
+                dragStartX = e.clientX - currentPanX;
+                dragStartY = e.clientY - currentPanY;
+            }
+        });
+
+        window.addEventListener('mousemove', (e) => {
+            if (!isDragging) return;
+            currentPanX = e.clientX - dragStartX;
+            currentPanY = e.clientY - dragStartY;
+            applyTransformToActiveImage(false);
+        });
+
+        window.addEventListener('mouseup', () => isDragging = false);
+
+        // Тач (Мобилка)
+        track.addEventListener('touchstart', (e) => {
+            if (e.target.tagName === 'IMG') {
+                if (e.touches.length === 1) {
+                    isDragging = true;
+                    dragStartX = e.touches[0].clientX - currentPanX;
+                    dragStartY = e.touches[0].clientY - currentPanY;
+                } else if (e.touches.length === 2) {
+                    isDragging = false;
+                    initialPinchDistance = getPinchDistance(e.touches);
+                    initialPinchScale = currentScale;
+                }
+            }
+        }, { passive: false });
+
+        track.addEventListener('touchmove', (e) => {
+            if (e.target.tagName !== 'IMG') return;
+
+            if (isDragging && e.touches.length === 1) {
+                e.preventDefault();
+                currentPanX = e.touches[0].clientX - dragStartX;
+                currentPanY = e.touches[0].clientY - dragStartY;
+                applyTransformToActiveImage(false);
+            } else if (e.touches.length === 2) {
+                e.preventDefault();
+                if (initialPinchDistance) {
+                    const currentDistance = getPinchDistance(e.touches);
+                    const scaleChange = currentDistance / initialPinchDistance;
+                    updateZoom(initialPinchScale * scaleChange);
+                }
+            }
+        }, { passive: false });
+
+        track.addEventListener('touchend', (e) => {
+            if (e.touches.length < 2) initialPinchDistance = null;
+            if (e.touches.length === 0) {
+                isDragging = false;
+            } else if (e.touches.length === 1) {
                 isDragging = true;
                 dragStartX = e.touches[0].clientX - currentPanX;
                 dragStartY = e.touches[0].clientY - currentPanY;
+            }
+        });
+    }
+
+    // --- 2. ПРИВЯЗКИ ДЛЯ ЛАЙТБОКСА (Полноэкранный режим) ---
+    const lbTrack = document.getElementById('lightbox-track');
+    const lbZoomSlider = document.getElementById('lb-zoom-slider');
+    const lbResetBtn = document.getElementById('lb-reset-btn');
+
+    if (lbTrack) {
+        if (lbZoomSlider) {
+            lbZoomSlider.addEventListener('input', (e) => {
+                lbScale = parseFloat(e.target.value);
+                applyLbTransform(true);
+            });
+        }
+
+        if (lbResetBtn) {
+            lbResetBtn.addEventListener('click', (e) => {
+                e.preventDefault(); e.stopPropagation(); resetLbCanvas();
+            });
+        }
+
+        lbTrack.addEventListener('wheel', (e) => {
+            e.preventDefault();
+            const delta = e.deltaY < 0 ? 0.1 : -0.1;
+            updateLbZoom(lbScale + delta);
+        });
+
+        // Мышь (Лайтбокс)
+        lbTrack.addEventListener('mousedown', (e) => {
+            if (e.target.tagName === 'IMG') {
+                e.preventDefault(); // КРИТИЧНО ДЛЯ FIREFOX (отключает системный drag)
+                lbIsDragging = true;
+                lbDragStartX = e.clientX - lbPanX;
+                lbDragStartY = e.clientY - lbPanY;
+            }
+        });
+
+        window.addEventListener('mousemove', (e) => {
+            if (!lbIsDragging) return;
+            lbPanX = e.clientX - lbDragStartX;
+            lbPanY = e.clientY - lbDragStartY;
+            applyLbTransform(false);
+        });
+
+        window.addEventListener('mouseup', () => lbIsDragging = false);
+
+        // Тач (Мобилка Лайтбокс)
+        lbTrack.addEventListener('touchstart', (e) => {
+            if (e.target.tagName === 'IMG') {
+                if (e.touches.length === 1) {
+                    lbIsDragging = true;
+                    lbDragStartX = e.touches[0].clientX - lbPanX;
+                    lbDragStartY = e.touches[0].clientY - lbPanY;
+                } else if (e.touches.length === 2) {
+                    lbIsDragging = false;
+                    lbInitialPinchDistance = getPinchDistance(e.touches);
+                    lbInitialPinchScale = lbScale;
+                }
+            }
+        }, { passive: false });
+
+        lbTrack.addEventListener('touchmove', (e) => {
+            if (e.target.tagName !== 'IMG') return;
+
+            if (lbIsDragging && e.touches.length === 1) {
+                e.preventDefault();
+                lbPanX = e.touches[0].clientX - lbDragStartX;
+                lbPanY = e.touches[0].clientY - lbDragStartY;
+                applyLbTransform(false);
             } else if (e.touches.length === 2) {
-                // Два пальца — зум (pinch)
-                isDragging = false;
-                initialPinchDistance = getPinchDistance(e.touches);
-                initialPinchScale = currentScale;
+                e.preventDefault();
+                if (lbInitialPinchDistance) {
+                    const currentDistance = getPinchDistance(e.touches);
+                    const scaleChange = currentDistance / lbInitialPinchDistance;
+                    updateLbZoom(lbInitialPinchScale * scaleChange);
+                }
             }
-        }
-    }, { passive: false });
+        }, { passive: false });
 
-    track.addEventListener('touchmove', (e) => {
-        if (e.target.tagName !== 'IMG') return;
-
-        if (isDragging && e.touches.length === 1) {
-            e.preventDefault();
-            currentPanX = e.touches[0].clientX - dragStartX;
-            currentPanY = e.touches[0].clientY - dragStartY;
-            applyTransformToActiveImage(false);
-        } else if (e.touches.length === 2) {
-            e.preventDefault();
-            if (initialPinchDistance) {
-                const currentDistance = getPinchDistance(e.touches);
-                const scaleChange = currentDistance / initialPinchDistance;
-                updateZoom(initialPinchScale * scaleChange);
+        lbTrack.addEventListener('touchend', (e) => {
+            if (e.touches.length < 2) lbInitialPinchDistance = null;
+            if (e.touches.length === 0) {
+                lbIsDragging = false;
+            } else if (e.touches.length === 1) {
+                lbIsDragging = true;
+                lbDragStartX = e.touches[0].clientX - lbPanX;
+                lbDragStartY = e.touches[0].clientY - lbPanY;
             }
-        }
-    }, { passive: false });
-
-    track.addEventListener('touchend', (e) => {
-        if (e.touches.length < 2) {
-            initialPinchDistance = null;
-        }
-        if (e.touches.length === 0) {
-            isDragging = false;
-        } else if (e.touches.length === 1) {
-            // Если убрали один палец, продолжаем таскать картинку оставшимся
-            isDragging = true;
-            dragStartX = e.touches[0].clientX - currentPanX;
-            dragStartY = e.touches[0].clientY - currentPanY;
-        }
-    });
+        });
+    }
 });
