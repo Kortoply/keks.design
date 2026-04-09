@@ -28,7 +28,29 @@ document.addEventListener('DOMContentLoaded', () => {
 /* =========================================
    ЛОКАЛИЗАЦИЯ (Мультиязычность)
 ========================================= */
-let currentLang = localStorage.getItem('keks_lang') || 'ru';
+let currentLang = 'ru';
+
+// Функция определения языка по URL при входе
+function initLanguageFromURL() {
+    const path = window.location.pathname.toLowerCase();
+    const params = new URLSearchParams(window.location.search);
+    const hash = window.location.hash.toLowerCase();
+
+    // 1. Проверяем путь (например, /en или /ru)
+    if (path === '/en' || path === '/en/') currentLang = 'en';
+    else if (path === '/ru' || path === '/ru/') currentLang = 'ru';
+    // 2. Проверяем GET параметры (?lang=en)
+    else if (params.get('lang') === 'en' || params.get('lang') === 'ru') currentLang = params.get('lang');
+    // 3. Проверяем хэш (#en)
+    else if (hash === '#en' || hash === '#ru') currentLang = hash.replace('#', '');
+    // 4. Иначе берем из localStorage (если есть) или оставляем 'ru'
+    else currentLang = localStorage.getItem('keks_lang') || 'ru';
+
+    localStorage.setItem('keks_lang', currentLang);
+}
+
+// Запускаем до загрузки DOM, чтобы язык определился сразу
+initLanguageFromURL();
 
 const dict = {
     ru: {
@@ -94,6 +116,22 @@ function applyLanguage() {
 window.toggleLanguage = function() {
     currentLang = currentLang === 'ru' ? 'en' : 'ru';
     localStorage.setItem('keks_lang', currentLang);
+
+    // Обновляем URL без перезагрузки страницы
+    const url = new URL(window.location);
+    const path = url.pathname.toLowerCase();
+
+    if (path === '/en' || path === '/en/' || path === '/ru' || path === '/ru/') {
+        url.pathname = '/' + currentLang;
+        window.history.replaceState({}, '', url);
+    } else if (url.searchParams.has('lang')) {
+        url.searchParams.set('lang', currentLang);
+        window.history.replaceState({}, '', url);
+    } else if (url.hash === '#en' || url.hash === '#ru') {
+        url.hash = '#' + currentLang;
+        window.history.replaceState({}, '', url);
+    }
+
     applyLanguage();
     initTypewriter();
 };

@@ -440,7 +440,6 @@ img {
     padding: 10px 20px;
     border-radius: 100px;
     z-index: 2020;
-    /* УДАЛЕНО pointer-events: auto; (оно перекрывало основное меню на мобилках) */
     box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
 }
 
@@ -606,7 +605,10 @@ img {
     .bento-item.span-2, .bento-item.span-3 { grid-column: span 1; }
 
     .hidden-mobile { display: none !important; }
-    .footer { padding: 3rem 2rem 110px 2rem; margin: 0 1rem; width: auto; border-radius: 24px 24px 0 0; }
+
+    /* Увеличен нижний отступ футера для мобилок */
+    .footer { padding: 4rem 2rem 140px 2rem; margin: 0 1rem; width: auto; border-radius: 24px 24px 0 0; }
+
     .footer-grid { grid-template-columns: 1fr; gap: 3rem; }
 
     .footer-right { width: 100%; align-items: flex-start; }
@@ -641,6 +643,10 @@ img {
 
 @media (max-width: 600px) {
     .section { padding: 5rem 1rem 2rem; }
+
+    /* ФИКС: Явно переопределяем класс футера, чтобы класс .section не "съедал" нижний отступ */
+    .footer.section { padding: 3rem 1.5rem 140px 1.5rem; }
+
     .card-content { padding: 2rem 1.5rem; }
 
     .hero-massive-title { font-size: 2.6rem; letter-spacing: -1px; margin-bottom: 3rem; min-height: 3.4em; }

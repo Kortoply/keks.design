@@ -21,6 +21,15 @@
 
     <link rel="stylesheet" href="/style.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <script>
+        const path = window.location.pathname.toLowerCase();
+        if (path === '/en' || path === '/en/') {
+            window.location.replace('/?lang=en');
+        } else if (path === '/ru' || path === '/ru/') {
+            window.location.replace('/?lang=ru');
+        }
+    </script>
 </head>
 <body>
 
