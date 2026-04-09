@@ -69,9 +69,7 @@ async function parsePage(html) {
     for (let i = 1; i < items.length; i++) {
         const item = items[i];
 
-        if (item.includes('tgme_widget_message_service')) {
-            continue;
-        }
+        if (item.includes('tgme_widget_message_service')) continue;
 
         const textMatch = item.match(/js-message_text[^>]*>([\s\S]*?)<\/div>/);
         let text = "";
@@ -82,7 +80,6 @@ async function parsePage(html) {
             rawText = rawText.replace(/<br\s*\/?>/gi, '\n');
             text = rawText.replace(/<[^>]*>/g, '');
 
-            // Расширенная расшифровка спецсимволов, включая восклицательный знак
             text = text.replace(/&amp;/g, '&')
                        .replace(/&lt;/g, '<')
                        .replace(/&gt;/g, '>')
@@ -95,24 +92,14 @@ async function parsePage(html) {
             const hashtagRegex = /#([a-zA-Zа-яА-ЯёЁ0-9_]+)/g;
             let matchHash;
             while ((matchHash = hashtagRegex.exec(text)) !== null) {
-                if (!tags.includes(matchHash[0])) {
-                    tags.push(matchHash[0]);
-                }
+                if (!tags.includes(matchHash[0])) tags.push(matchHash[0]);
             }
 
             text = text.replace(/\s*#([a-zA-Zа-яА-ЯёЁ0-9_]+)/g, '').trim();
             text = text.replace(/\n{3,}/g, '\n\n');
         }
 
-        if (
-            text === 'Channel created' ||
-            text === 'Channel photo updated' ||
-            text.includes('pinned «') ||
-            text.includes('pinned a message') ||
-            text.includes('закрепил')
-        ) {
-            continue;
-        }
+        if (text === 'Channel created' || text === 'Channel photo updated' || text.includes('pinned') || text.includes('закрепил')) continue;
 
         const linkMatch = item.match(/href="([^"]*?t\.me\/[^"]*?\/\d+)"/);
         const link = linkMatch ? linkMatch[1] : `https://t.me/${CHANNEL_NAME}`;
@@ -122,34 +109,53 @@ async function parsePage(html) {
 
         const cleanItem = item.replace(/<a[^>]+tgme_widget_message_user_pic[^>]+>.*?<\/a>/gs, '');
 
-        const imgRegex = /background-image:url\(['"]?([^'"]*?)['"]?\)/g;
-        let match;
         const rawUrls = [];
+        let match;
 
+        // Ищем фоновые изображения
+        const imgRegex = /background-image:url\(['"]?([^'"]*?)['"]?\)/g;
         while ((match = imgRegex.exec(cleanItem)) !== null) {
             let rawUrl = match[1];
-
             if (!rawUrl.includes('/emoji/') && !rawUrl.includes('base64')) {
                 if (rawUrl.startsWith('//')) rawUrl = 'https:' + rawUrl;
                 rawUrl = rawUrl.replace(/&amp;/g, '&');
-
-                if (!rawUrls.includes(rawUrl)) {
-                    rawUrls.push(rawUrl);
-                }
+                if (!rawUrls.includes(rawUrl)) rawUrls.push(rawUrl);
             }
+        }
+
+        // Ищем видео (src внутри тега video или source)
+        const videoRegex = /<video[^>]+src=["']([^"']+)["']/g;
+        while ((match = videoRegex.exec(cleanItem)) !== null) {
+            let rawUrl = match[1];
+            if (!rawUrls.includes(rawUrl)) rawUrls.push(rawUrl);
+        }
+
+        const sourceRegex = /<source[^>]+src=["']([^"']+)["']/g;
+        while ((match = sourceRegex.exec(cleanItem)) !== null) {
+            let rawUrl = match[1];
+            if (!rawUrls.includes(rawUrl)) rawUrls.push(rawUrl);
         }
 
         const localImages = [];
 
         for (let idx = 0; idx < rawUrls.length; idx++) {
             const rawUrl = rawUrls[idx];
-            const fileName = `case_${new Date(date).getTime()}_${idx}.jpg`;
+
+            // Определяем расширение
+            let ext = 'jpg';
+            const lowerUrl = rawUrl.toLowerCase();
+            if (lowerUrl.includes('.mp4')) ext = 'mp4';
+            else if (lowerUrl.includes('.webm')) ext = 'webm';
+            else if (lowerUrl.includes('.gif')) ext = 'gif';
+            else if (lowerUrl.includes('.png')) ext = 'png';
+
+            const fileName = `case_${new Date(date).getTime()}_${idx}.${ext}`;
             const filePath = path.join(IMG_DIR, fileName);
 
             if (fs.existsSync(filePath)) {
                 localImages.push(`./cases-img/${fileName}`);
             } else {
-                console.log(`Скачиваю картинку ${idx + 1} из ${rawUrls.length} для поста...`);
+                console.log(`Скачиваю медиа ${idx + 1} из ${rawUrls.length} для поста...`);
                 const isSuccess = await downloadImage(rawUrl, filePath);
                 if (isSuccess) {
                     localImages.push(`./cases-img/${fileName}`);
@@ -192,7 +198,6 @@ async function run() {
                 break;
             }
             before = nextBefore;
-
             await new Promise(resolve => setTimeout(resolve, 1000));
         }
 
