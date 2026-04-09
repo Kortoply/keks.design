@@ -170,7 +170,7 @@ window.toggleContactMethod = function() {
 
 function initContactForm() {
     const form = document.getElementById('contact-form');
-    if(!form) return;
+    if (!form) return;
 
     document.querySelectorAll('.matrix-input').forEach(input => {
         input.addEventListener('input', () => {
@@ -216,6 +216,9 @@ function initContactForm() {
         }
 
         if (!contactVal && !messageVal) {
+            contactInput.classList.add('error-field');
+            messageInput.classList.add('error-field');
+            hasError = true;
             currentErrorMsg = dict[currentLang]['form_empty_error'];
         }
 
@@ -223,9 +226,13 @@ function initContactForm() {
             status.style.color = '#ff4444';
             status.innerText = currentErrorMsg;
             status.style.display = 'block';
+
             setTimeout(() => {
-                if(status.innerText === currentErrorMsg) status.style.display = 'none';
+                if (status.innerText === currentErrorMsg) {
+                    status.style.display = 'none';
+                }
             }, 4000);
+
             return;
         }
 
@@ -233,40 +240,53 @@ function initContactForm() {
         btn.disabled = true;
         status.style.display = 'none';
 
+        const payload = {
+            method,
+            contact: contactVal,
+            message: messageVal,
+            lang: currentLang,
+            source: window.location.href,
+            userAgent: navigator.userAgent
+        };
+
         const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 5000);
+        const timeoutId = setTimeout(() => controller.abort(), 15000);
 
         try {
             const WORKER_URL = 'https://tg.keks.design/';
 
-            const res = await fetch(WORKER_URL, {
+            const response = await fetch(WORKER_URL, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ method, contact: contactVal, message: messageVal }),
-                signal: controller.signal
+                body: JSON.stringify(payload),
+                signal: controller.signal,
+                keepalive: true
             });
 
             clearTimeout(timeoutId);
 
-            if(res.ok) {
+            if (response.ok) {
                 status.style.color = '#FFFFFF';
                 status.innerText = dict[currentLang]['form_success'];
+
                 form.reset();
                 document.getElementById('contact-method-toggle').classList.remove('email-active');
                 document.getElementById('contact-method-val').value = 'telegram';
                 document.getElementById('contact-handle').placeholder = '@username';
             } else {
-                throw new Error('Bad response');
+                throw new Error(`Bad response: ${response.status}`);
             }
-        } catch(err) {
+        } catch (err) {
             clearTimeout(timeoutId);
             status.style.color = '#8A8A93';
 
             if (err.name === 'AbortError') {
-                status.innerText = dict[currentLang]['form_timeout'];
+                status.innerText = 'Сервер долго отвечает. Попробуйте ещё раз.';
             } else {
-                status.innerText = dict[currentLang]['form_error'];
+                status.innerText = 'Ошибка сети. Проверьте интернет или напишите напрямую.';
             }
+
+            console.error('Contact form submit error:', err);
         } finally {
             btn.innerText = dict[currentLang]['form_submit'];
             btn.disabled = false;
