@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Открытие Gmail | KEKS.DESIGN</title>
+    <style>
+        /* Строгий и чистый стиль, подходящий под современный веб */
+        body {
+            background-color: #0A0A0A; /* Глубокий солидный темный цвет */
+            color: #FFFFFF;
+            font-family: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            overflow: hidden;
+        }
+        .container {
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 16px;
+        }
+        .text {
+            font-size: 14px;
+            font-weight: 500;
+            letter-spacing: 0.5px;
+            color: #888888;
+        }
+        /* Минималистичный SVG-лоадер */
+        .spinner {
+            width: 24px;
+            height: 24px;
+            border: 2px solid #333333;
+            border-top: 2px solid #FFFFFF;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <div class="spinner"></div>
+        <div class="text">Перенаправление в Gmail...</div>
+    </div>
+
+    <script>
+        // Читаем email из адресной строки (из параметра ?to=...)
+        const urlParams = new URLSearchParams(window.location.search);
+        const userEmail = urlParams.get('to');
+
+        // Небольшая задержка для плавности интерфейса (опционально)
+        setTimeout(() => {
+            if (userEmail) {
+                // Кидаем сразу в окно написания письма Gmail
+                window.location.href = `https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent(userEmail)}`;
+            } else {
+                // Если кто-то зашел просто на keks.design/mail.html без почты — кидаем на главную
+                window.location.href = '/';
+            }
+        }, 600);
+    </script>
+
+</body>
+</html>
